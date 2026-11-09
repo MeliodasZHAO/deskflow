@@ -25,3 +25,11 @@ qt_add_resources(ConnectionHomeTests connection_home_translations PREFIX "/trans
 add_dependencies(ConnectionHomeTests ConnectionHomeTestTranslations)
 set_tests_properties(ConnectionHomeTests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 30)
 
+create_test(
+  NAME ConnectionOverviewWindowTests
+  DEPENDS gui
+  SOURCE widgets/ConnectionOverviewWindowTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)
+target_sources(ConnectionOverviewWindowTests PRIVATE "${CMAKE_SOURCE_DIR}/src/apps/res/deskflow.qrc")
+set_tests_properties(ConnectionOverviewWindowTests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 30)

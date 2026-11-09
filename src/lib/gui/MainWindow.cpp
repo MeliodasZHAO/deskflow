@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 - 2026 Chris Rizzitello <sithord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2024 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
@@ -37,6 +37,7 @@
 #include <QComboBox>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QMenu>
@@ -50,6 +51,8 @@
 #include <QScreen>
 #include <QScrollBar>
 #include <QSignalBlocker>
+#include <QStackedWidget>
+#include <QVBoxLayout>
 
 #include <memory>
 
@@ -157,6 +160,7 @@ MainWindow::MainWindow()
   }
 
   applyConfig();
+  setupConnectionHome();
   m_statusBar->setSecurityIcon(TlsUtility::isEnabled());
   restoreWindow();
 
@@ -181,7 +185,7 @@ void MainWindow::restoreWindow()
   auto windowGeometry = Settings::value(Settings::Gui::WindowGeometry).toRect();
   const auto totalGeometry = QGuiApplication::primaryScreen()->availableGeometry();
   if (!windowGeometry.isValid()) {
-    adjustSize();
+    resize(1040, 740);
     windowGeometry = geometry();
   } else {
     setGeometry(windowGeometry);
@@ -193,8 +197,7 @@ void MainWindow::restoreWindow()
     move(screenGeometry.center() - rect().center());
   }
 
-  if (!Settings::value(Settings::Gui::LogExpanded).toBool())
-    setFixedSize(size());
+  setMinimumSize(620, 448);
 }
 
 void MainWindow::setupControls()
@@ -320,25 +323,8 @@ void MainWindow::toggleLogVisible(bool visible)
     return;
   }
 
-  setFixedSize(16777215, 16777215);
   Settings::setValue(Settings::Gui::LogExpanded, visible);
-  if (visible) {
-    if (m_logDock->isFloating()) {
-      adjustSize();
-      setFixedSize(size());
-    } else {
-      QTimer::singleShot(15, this, [&] { resize(m_expandedSize); });
-    }
-  } else {
-    if (!m_logDock->isFloating()) {
-      m_expandedSize = geometry().size();
-    }
-    m_logDock->hide();
-    if (!m_logDock->isFloating()) {
-      adjustSize();
-    }
-    setFixedSize(size());
-  }
+  m_logDock->setVisible(visible);
   Settings::setValue(Settings::Gui::WindowGeometry, geometry());
 }
 
@@ -1361,4 +1347,148 @@ bool MainWindow::canRunCore() const
   const bool isServer = mode == Settings::CoreMode::Server;
   const bool isClient = mode == Settings::CoreMode::Client;
   return ((isServer || isClient) && (isClient && !ui->cbHostname->currentText().isEmpty()) || isServer);
+}
+
+void MainWindow::setupConnectionHome()
+{
+  m_connectionOptionsPage = takeCentralWidget();
+  m_connectionPages = new QStackedWidget(this);
+  m_connectionHome = new ConnectionHome(m_connectionPages);
+  m_connectionPages->addWidget(m_connectionHome);
+  m_connectionPages->addWidget(m_connectionOptionsPage);
+  setCentralWidget(m_connectionPages);
+
+  auto *back = new QPushButton(tr("Back to overview"), m_connectionOptionsPage);
+  back->setObjectName("backToOverview");
+  qobject_cast<QVBoxLayout *>(m_connectionOptionsPage->layout())->insertWidget(0, back, 0, Qt::AlignLeft);
+  connect(back, &QPushButton::clicked, this, [this] {
+    m_connectionPages->setCurrentWidget(m_connectionHome);
+    refreshConnectionHome();
+  });
+  connect(m_connectionHome, &ConnectionHome::roleChosen, this, [this](ConnectionHome::Role role) {
+    if (m_coreProcess.processState() != ProcessState::Stopped)
+      return;
+    ui->rbModeServer->setChecked(role == ConnectionHome::Role::Share);
+    ui->rbModeClient->setChecked(role == ConnectionHome::Role::Receive);
+    refreshConnectionHome();
+  });
+  connect(m_connectionHome, &ConnectionHome::addressChosen, this, [this](const QString &address) {
+    ui->cbHostname->setCurrentText(address);
+    saveSettings();
+    refreshConnectionHome();
+  });
+  connect(m_connectionHome, &ConnectionHome::startStopRequested, this, [this] {
+    const auto process = m_coreProcess.processState();
+    if (process == ProcessState::Stopped) {
+      m_connectionError.clear();
+      m_connectionRecovering = false;
+      startCore();
+    } else {
+      stopCore();
+    }
+    refreshConnectionHome();
+  });
+  connect(m_connectionHome, &ConnectionHome::retryRequested, this, [this] {
+    m_connectionError.clear();
+    m_connectionRecovering = false;
+    startCore();
+    refreshConnectionHome();
+  });
+  const auto configureServer = [this] { showConfigureServer(QString()); };
+  connect(m_connectionHome, &ConnectionHome::layoutRequested, this, configureServer);
+  connect(m_connectionHome, &ConnectionHome::addComputerRequested, this, configureServer);
+  connect(m_connectionHome, &ConnectionHome::findDeviceRequested, this, &MainWindow::chooseRecentComputer);
+  connect(m_connectionHome, &ConnectionHome::savedDevicesRequested, this, &MainWindow::chooseRecentComputer);
+  connect(m_connectionHome, &ConnectionHome::settingsRequested, this, &MainWindow::openSettings);
+  connect(m_connectionHome, &ConnectionHome::identitySetupRequested, this, &MainWindow::openSettings);
+  connect(m_connectionHome, &ConnectionHome::connectionOptionsRequested, this, [this] {
+    m_connectionPages->setCurrentWidget(m_connectionOptionsPage);
+  });
+  connect(m_connectionHome, &ConnectionHome::diagnosticsRequested, this, [this] {
+    m_connectionPages->setCurrentWidget(m_connectionOptionsPage);
+    m_logDock->toggleViewAction()->setChecked(true);
+  });
+  connect(Settings::instance(), &Settings::settingsChanged, this, [this] { refreshConnectionHome(); });
+  connect(&m_coreProcess, &CoreProcess::processStateChanged, this, [this](ProcessState state) {
+    if (state == ProcessState::RetryPending)
+      m_connectionRecovering = true;
+    else if (state == ProcessState::Stopped)
+      m_connectionRecovering = false;
+    refreshConnectionHome();
+  });
+  connect(&m_coreProcess, &CoreProcess::connectionStateChanged, this, [this](ConnectionState state) {
+    if (state == ConnectionState::Connected || state == ConnectionState::Listening)
+      m_connectionRecovering = false;
+    refreshConnectionHome();
+  });
+  connect(&m_coreProcess, &CoreProcess::retryIn, this, [this] {
+    m_connectionRecovering = true;
+    refreshConnectionHome();
+  });
+  connect(&m_coreProcess, &CoreProcess::error, this, [this](CoreProcess::Error) {
+    m_connectionError = tr("Review the connection settings and logs before trying again.");
+    refreshConnectionHome();
+  });
+  connect(&m_coreProcess, &CoreProcess::connectedClientsChanged, this, [this](const QStringList &clients) {
+    m_connectionClients = clients;
+    refreshConnectionHome();
+  });
+  connect(ui->cbHostname, &QComboBox::currentTextChanged, this, [this] { refreshConnectionHome(); });
+  refreshConnectionHome();
+}
+
+void MainWindow::chooseRecentComputer()
+{
+  const auto hosts = Settings::value(Settings::Client::RecentRemoteHosts).toStringList();
+  if (hosts.isEmpty()) {
+    m_connectionHome->showManualEntry();
+    return;
+  }
+  bool accepted = false;
+  const auto host =
+      QInputDialog::getItem(this, tr("Choose computer"), tr("Computer name or IP address"), hosts, 0, true, &accepted)
+          .trimmed();
+  if (!accepted || host.isEmpty())
+    return;
+  ui->cbHostname->setCurrentText(host);
+  saveSettings();
+  refreshConnectionHome();
+}
+
+void MainWindow::refreshConnectionHome()
+{
+  if (!m_connectionHome)
+    return;
+  ConnectionHome::State state;
+  const auto mode = m_coreProcess.mode();
+  const auto process = m_coreProcess.processState();
+  const auto connection = m_coreProcess.connectionState();
+  state.role = mode == CoreMode::Server   ? ConnectionHome::Role::Share
+               : mode == CoreMode::Client ? ConnectionHome::Role::Receive
+                                          : ConnectionHome::Role::None;
+  using Stage = ConnectionHome::Stage;
+  if (process == ProcessState::Stopping)
+    state.stage = Stage::Stopping;
+  else if (m_connectionRecovering)
+    state.stage = Stage::Recovering;
+  else if (process == ProcessState::Starting)
+    state.stage = Stage::Starting;
+  else if (process == ProcessState::Started && connection == ConnectionState::Connected)
+    state.stage = Stage::Connected;
+  else if (process == ProcessState::Started && connection == ConnectionState::Listening)
+    state.stage = Stage::Listening;
+  else if (process == ProcessState::Started)
+    state.stage = Stage::Connecting;
+  else if (!m_connectionError.isEmpty())
+    state.stage = Stage::Failed;
+  state.localName = Settings::value(Settings::Core::ComputerName).toString();
+  state.hasAddress = mode == CoreMode::Client && !ui->cbHostname->currentText().trimmed().isEmpty();
+  state.peerName = mode == CoreMode::Server ? m_connectionClients.join(QStringLiteral(", "))
+                                            : ui->cbHostname->currentText().trimmed();
+  state.hasSavedDevices = !Settings::value(Settings::Client::RecentRemoteHosts).toStringList().isEmpty();
+  state.identityReady = true;
+  state.canStart = canRunCore();
+  state.canRetry = process == ProcessState::Stopped && state.canStart;
+  state.explanation = m_connectionError;
+  m_connectionHome->setState(state);
 }

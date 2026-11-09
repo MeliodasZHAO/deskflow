@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 - 2026 Chris Rizzitello <sithord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2024 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
@@ -19,6 +19,7 @@
 #include "config/ServerConfig.h"
 #include "gui/core/CoreProcess.h"
 #include "gui/core/NetworkMonitor.h"
+#include "gui/widgets/ConnectionHome.h"
 #include "net/Fingerprint.h"
 
 #ifdef Q_OS_MACOS
@@ -27,6 +28,7 @@
 
 class QAction;
 class QMenu;
+class QStackedWidget;
 class QLocalServer;
 
 class DeskflowApplication;
@@ -132,6 +134,9 @@ private:
   void showConfigureClient();
   void restoreWindow();
   void setupControls();
+  void setupConnectionHome();
+  void refreshConnectionHome();
+  void chooseRecentComputer();
   void showFirstConnectedMessage();
   void updateStatus();
   void showAndActivate();
@@ -181,6 +186,13 @@ private:
   QSystemTrayIcon *m_trayIcon = nullptr;
   QLocalServer *m_guiDupeChecker = nullptr;
   deskflow::gui::ipc::DaemonIpcClient *m_daemonIpcClient = nullptr;
+
+  deskflow::gui::ConnectionHome *m_connectionHome = nullptr;
+  QStackedWidget *m_connectionPages = nullptr;
+  QWidget *m_connectionOptionsPage = nullptr;
+  QString m_connectionError;
+  QStringList m_connectionClients;
+  bool m_connectionRecovering = false;
 
   LogDock *m_logDock;
   StatusBar *m_statusBar = nullptr;
