@@ -487,11 +487,11 @@ Do you want to connect to the server?
 <context>
     <name>MainWindow</name>
     <message>
-        <source>This computer&apos;s name:</source>
+        <source>This computer's name:</source>
         <translation>此计算机名称：</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name can&apos;t have have spaces or special characters&lt;/p&gt;&lt;p&gt;Use Enter to save the name change.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name can't have have spaces or special characters&lt;/p&gt;&lt;p&gt;Use Enter to save the name change.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;名称不能包含空格或特殊字符&lt;/p&gt;&lt;p&gt;按 Enter 键保存更改。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
@@ -499,7 +499,7 @@ Do you want to connect to the server?
         <translation>编辑计算机名称</translation>
     </message>
     <message>
-        <source>Use this computer&apos;s keyboard and mouse
+        <source>Use this computer's keyboard and mouse
 (make this computer the server)</source>
         <translation>使用此计算机的键盘和鼠标
 (将此计算机设为服务器)</translation>
@@ -575,7 +575,7 @@ Do you want to connect to the server?
         <translation>断开</translation>
     </message>
     <message>
-        <source>&lt;p&gt;Failed to connect to the server &apos;%1&apos;.&lt;/p&gt;&lt;p&gt;A Client with your name is already connected to the server.&lt;/p&gt;Please ensure that you&apos;re using a unique name and that only a single instance of the client process is running.&lt;/p&gt;</source>
+        <source>&lt;p&gt;Failed to connect to the server '%1'.&lt;/p&gt;&lt;p&gt;A Client with your name is already connected to the server.&lt;/p&gt;Please ensure that you're using a unique name and that only a single instance of the client process is running.&lt;/p&gt;</source>
         <translation>&lt;p&gt;连接到服务器“%1”失败。&lt;/p&gt;&lt;p&gt;一个同名的客户端已连接到服务器。&lt;/p&gt;请确保您使用的名称唯一，且只有一个客户端进程实例在运行。&lt;/p&gt;</translation>
     </message>
     <message>
@@ -584,11 +584,11 @@ Do you want to connect to the server?
     </message>
     <message>
         <source>Invalid Computer Name</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished" />
     </message>
     <message>
         <source>Computer name already exists</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished" />
     </message>
     <message>
         <source>No IP Detected</source>
@@ -613,6 +613,22 @@ Do you want to connect to the server?
     <message>
         <source>one of the following IPs:&lt;br/&gt;%1</source>
         <translation>以下 IP 地址之一：&lt;br/&gt;%1</translation>
+    </message>
+    <message>
+        <source>Back to overview</source>
+        <translation>返回概览</translation>
+    </message>
+    <message>
+        <source>Review the connection settings and logs before trying again.</source>
+        <translation>请检查连接设置和日志后重试。</translation>
+    </message>
+    <message>
+        <source>Choose computer</source>
+        <translation>选择电脑</translation>
+    </message>
+    <message>
+        <source>Computer name or IP address</source>
+        <translation>电脑名称或 IP 地址</translation>
     </message>
     <message>
         <source>
@@ -736,16 +752,16 @@ Additionally, check you are able to %1 the server config file: %2</source>
 另外，请检查您是否能够%1服务器配置文件：%2</translation>
     </message>
     <message>
-        <source>Don&apos;t show this again</source>
-        <translation type="unfinished"></translation>
+        <source>Don't show this again</source>
+        <translation type="unfinished" />
     </message>
     <message>
         <source>Missing Keyboard Layouts</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished" />
     </message>
     <message>
         <source>&lt;p&gt;Keyboard layout support requires matching layouts on all computers. The following layouts from the other computer are not installed on this computer:&lt;/p&gt;&lt;p&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please install them to enable support for these layouts.&lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished" />
     </message>
 </context>
 <context>
@@ -1395,6 +1411,408 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Encryption Disabled</source>
         <translation>加密已禁用</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::ComputerGlyph</name>
+    <message>
+        <source>Keyboard and mouse</source>
+        <translation type="unfinished">提供键盘和鼠标</translation>
+    </message>
+    <message>
+        <source>Display</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::ConnectionHome</name>
+    <message>
+        <source>Back</source>
+        <translation>返回</translation>
+    </message>
+    <message>
+        <source>Add a computer by address</source>
+        <translation>通过地址添加电脑</translation>
+    </message>
+    <message>
+        <source>Use this computer’s keyboard and mouse</source>
+        <translation>使用本机的键盘和鼠标</translation>
+    </message>
+    <message>
+        <source>Control the other computer from here.</source>
+        <translation>从这里控制另一台电脑。</translation>
+    </message>
+    <message>
+        <source>Use the other computer’s keyboard and mouse</source>
+        <translation>使用另一台的键盘和鼠标</translation>
+    </message>
+    <message>
+        <source>Control this computer from there.</source>
+        <translation>从另一台电脑控制本机。</translation>
+    </message>
+    <message>
+        <source>This computer</source>
+        <translation>这台电脑</translation>
+    </message>
+    <message>
+        <source>Other computer</source>
+        <translation>另一台电脑</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>已连接</translation>
+    </message>
+    <message>
+        <source>Controls the other computer</source>
+        <translation>控制另一台电脑</translation>
+    </message>
+    <message>
+        <source>Receives control from the other computer</source>
+        <translation>接收另一台电脑的控制</translation>
+    </message>
+    <message>
+        <source>Computer name or IP address</source>
+        <translation>电脑名称或 IP 地址</translation>
+    </message>
+    <message>
+        <source>For example, work-pc.local</source>
+        <translation>例如 work-pc.local</translation>
+    </message>
+    <message>
+        <source>Use this address</source>
+        <translation>使用此地址</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation>断开连接</translation>
+    </message>
+    <message>
+        <source>Stop sharing</source>
+        <translation>停止共享</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>暂停</translation>
+    </message>
+    <message>
+        <source>Connection needs attention</source>
+        <translation>连接需要处理</translation>
+    </message>
+    <message>
+        <source>Review connection</source>
+        <translation>查看问题</translation>
+    </message>
+    <message>
+        <source>Keyboard and mouse sharing</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Mac and Windows</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Changes apply immediately.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Stopping...</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Paused</source>
+        <translation>已暂停</translation>
+    </message>
+    <message>
+        <source>Not connected</source>
+        <translation>尚未连接</translation>
+    </message>
+    <message>
+        <source>Choose the computer whose keyboard and mouse you want to use.</source>
+        <translation>选择提供键盘和鼠标的那台电脑。</translation>
+    </message>
+    <message>
+        <source>Arrange the computers before you start sharing.</source>
+        <translation>开始共享前，请先排列两台电脑的位置。</translation>
+    </message>
+    <message>
+        <source>Start sharing</source>
+        <translation>开始共享</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Saved computers</source>
+        <translation>已存电脑</translation>
+    </message>
+    <message>
+        <source>Diagnostics</source>
+        <translation>诊断</translation>
+    </message>
+    <message>
+        <source>Enter a computer name or IP address, without a web address or spaces.</source>
+        <translation>请输入电脑名称或 IP 地址，不要包含网址或空格。</translation>
+    </message>
+    <message>
+        <source>Reconnect</source>
+        <translation>重新连接</translation>
+    </message>
+    <message>
+        <source>This computer controls %1.</source>
+        <translation>本机向 %1 提供键鼠。</translation>
+    </message>
+    <message>
+        <source>%1 controls this computer.</source>
+        <translation>由 %1 向本机提供键鼠。</translation>
+    </message>
+    <message>
+        <source>Checking the computer’s identity</source>
+        <translation>正在核验电脑身份</translation>
+    </message>
+    <message>
+        <source>Choose a controlling computer</source>
+        <translation>选择控制端电脑</translation>
+    </message>
+    <message>
+        <source>Connect using the current connection settings.</source>
+        <translation>使用当前连接设置连接。</translation>
+    </message>
+    <message>
+        <source>Connecting to %1</source>
+        <translation>正在连接 %1</translation>
+    </message>
+    <message>
+        <source>Could not connect</source>
+        <translation>连接失败</translation>
+    </message>
+    <message>
+        <source>Finding the saved computer</source>
+        <translation>正在查找已存电脑</translation>
+    </message>
+    <message>
+        <source>Keyboard and mouse</source>
+        <translation>提供键盘和鼠标</translation>
+    </message>
+    <message>
+        <source>On the receiving computer, choose “Use the other computer’s keyboard and mouse”, then select this computer.</source>
+        <translation>在被控电脑上选择“使用另一台电脑的键盘和鼠标”，再选择这台电脑。</translation>
+    </message>
+    <message>
+        <source>Prepare this computer’s identity before the first connection.</source>
+        <translation>首次连接前，请先准备这台电脑的身份。</translation>
+    </message>
+    <message>
+        <source>Preparing the input process. You can cancel this attempt.</source>
+        <translation>正在准备键鼠共享，可以取消本次尝试。</translation>
+    </message>
+    <message>
+        <source>Receives control</source>
+        <translation>接收控制</translation>
+    </message>
+    <message>
+        <source>Receiving computer</source>
+        <translation>被控电脑</translation>
+    </message>
+    <message>
+        <source>Reconnecting</source>
+        <translation>正在重新连接</translation>
+    </message>
+    <message>
+        <source>The previous attempt did not complete. The next retry is in %1 s.</source>
+        <translation>上次连接未完成，%1 秒后重试。</translation>
+    </message>
+    <message>
+        <source>Retrying the connection. No input is shared until it connects.</source>
+        <translation>正在重试连接，连接成功前不会共享输入。</translation>
+    </message>
+    <message>
+        <source>Searching the selected network. Only the saved identity can resume this connection.</source>
+        <translation>正在所选网络中查找，只有身份与记录一致的电脑才能恢复连接。</translation>
+    </message>
+    <message>
+        <source>Sharing starts after the saved identity is verified. A first connection needs your fingerprint review.</source>
+        <translation>身份核验通过后开始共享；首次连接需要你核对指纹。</translation>
+    </message>
+    <message>
+        <source>Start sharing here, then connect from the receiving computer. Screen positions are arranged here.</source>
+        <translation>先在这里启动共享，再从被控电脑发起连接。屏幕位置统一在这里排列。</translation>
+    </message>
+    <message>
+        <source>Starting connection</source>
+        <translation>正在启动连接</translation>
+    </message>
+    <message>
+        <source>Starting sharing</source>
+        <translation>正在启动共享</translation>
+    </message>
+    <message>
+        <source>Stopping sharing</source>
+        <translation>正在停止共享</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>重试</translation>
+    </message>
+    <message>
+        <source>Waiting for a receiving computer</source>
+        <translation>等待被控电脑连接</translation>
+    </message>
+    <message>
+        <source>Waiting for the controlling computer to respond. No input is shared yet.</source>
+        <translation>正在等待控制端响应，尚未开始键鼠共享。</translation>
+    </message>
+    <message>
+        <source>Waiting for the input process to stop.</source>
+        <translation>正在等待键鼠共享进程停止。</translation>
+    </message>
+    <message>
+        <source>Connection settings</source>
+        <translation>连接设置</translation>
+    </message>
+    <message>
+        <source>Disconnecting</source>
+        <translation>正在断开连接</translation>
+    </message>
+    <message>
+        <source>Could not start sharing</source>
+        <translation>无法启动共享</translation>
+    </message>
+    <message>
+        <source>Start sharing, then connect from the receiving computer.</source>
+        <translation>点击开始共享，再从被控电脑连接。</translation>
+    </message>
+    <message>
+        <source>Choose this computer on the receiving computer.</source>
+        <translation>在被控电脑上选择这台电脑。</translation>
+    </message>
+    <message>
+        <source>Overview</source>
+        <translation>概览</translation>
+    </message>
+    <message>
+        <source>Computers</source>
+        <translation>电脑</translation>
+    </message>
+    <message>
+        <source>Add computer</source>
+        <translation>添加电脑</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <source>See where input is going and manage the current connection.</source>
+        <translation>查看键鼠由哪台电脑控制，并管理当前连接。</translation>
+    </message>
+    <message>
+        <source>Choose which computer supplies the keyboard and mouse.</source>
+        <translation>选择由哪台电脑提供键盘和鼠标。</translation>
+    </message>
+    <message>
+        <source>Connect two computers</source>
+        <translation>连接两台电脑</translation>
+    </message>
+    <message>
+        <source>Enter the address shown on the other computer.</source>
+        <translation>输入另一台电脑上显示的地址。</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>已就绪</translation>
+    </message>
+    <message>
+        <source>Connection setup required</source>
+        <translation>需要设置连接</translation>
+    </message>
+    <message>
+        <source>Prepare</source>
+        <translation>准备</translation>
+    </message>
+    <message>
+        <source>Enter address</source>
+        <translation>输入地址</translation>
+    </message>
+    <message>
+        <source>Arrange</source>
+        <translation>排列</translation>
+    </message>
+    <message>
+        <source>Connect to %1 using the current connection settings.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Choose computer</source>
+        <translation>选择电脑</translation>
+    </message>
+    <message>
+        <source>Change address</source>
+        <translation>更改地址</translation>
+    </message>
+    <message>
+        <source>Add a receiving computer</source>
+        <translation>添加被控电脑</translation>
+    </message>
+    <message>
+        <source>Choose another computer</source>
+        <translation>选择其他电脑</translation>
+    </message>
+    <message>
+        <source>Keyboard and mouse control</source>
+        <translation>键鼠控制</translation>
+    </message>
+    <message>
+        <source>This computer controls the other computer</source>
+        <translation>本机控制另一台电脑</translation>
+    </message>
+    <message>
+        <source>The other computer controls this computer</source>
+        <translation>另一台电脑控制本机</translation>
+    </message>
+    <message>
+        <source>This computer supplies the keyboard and mouse to the other computer</source>
+        <translation>本机向另一台电脑提供键盘和鼠标</translation>
+    </message>
+    <message>
+        <source>This computer receives keyboard and mouse input from the other computer</source>
+        <translation>本机接收另一台电脑的键盘和鼠标输入</translation>
+    </message>
+    <message>
+        <source>Arrange computers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Let this computer control</source>
+        <translation>改由本机控制</translation>
+    </message>
+    <message>
+        <source>Change control to this computer</source>
+        <translation>改为由本机控制</translation>
+    </message>
+    <message>
+        <source>Let the other computer control</source>
+        <translation>改由另一台电脑控制</translation>
+    </message>
+    <message>
+        <source>Change control to the other computer</source>
+        <translation>改为由另一台电脑控制</translation>
+    </message>
+    <message>
+        <source>Connection controls</source>
+        <translation>连接操作</translation>
     </message>
 </context>
 <context>

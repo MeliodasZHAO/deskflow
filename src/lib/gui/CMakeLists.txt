@@ -112,6 +112,10 @@ add_library(${target} STATIC
   widgets/SearchWidget.h
   widgets/SearchWidget.cpp
   widgets/StatusBar.cpp
+  widgets/ConnectionHome.cpp
+  widgets/ConnectionHome.h
+  widgets/ActionButton.h
+  widgets/FlowLayout.h
   widgets/StatusBar.h
   widgets/SettingsDialogButtonBox.cpp
   widgets/SettingsDialogButtonBox.h

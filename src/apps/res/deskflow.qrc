@@ -166,4 +166,20 @@
         <file>icons/deskflow-light/status/64/security-medium.svg</file>
         <file>icons/deskflow-light/index.theme</file>
     </qresource>
+  <qresource prefix="/">
+    <file>icons/deskflow-dark/actions/16/computer-add.svg</file>
+    <file>icons/deskflow-dark/actions/16/computers.svg</file>
+    <file>icons/deskflow-dark/actions/16/connection-link.svg</file>
+    <file>icons/deskflow-dark/actions/22/keyboard-duotone.svg</file>
+    <file>icons/deskflow-dark/actions/22/laptop-duotone.svg</file>
+    <file>icons/deskflow-dark/actions/22/monitor-duotone.svg</file>
+    <file>icons/deskflow-dark/actions/22/mouse-duotone.svg</file>
+    <file>icons/deskflow-light/actions/16/computer-add.svg</file>
+    <file>icons/deskflow-light/actions/16/computers.svg</file>
+    <file>icons/deskflow-light/actions/16/connection-link.svg</file>
+    <file>icons/deskflow-light/actions/22/keyboard-duotone.svg</file>
+    <file>icons/deskflow-light/actions/22/laptop-duotone.svg</file>
+    <file>icons/deskflow-light/actions/22/monitor-duotone.svg</file>
+    <file>icons/deskflow-light/actions/22/mouse-duotone.svg</file>
+  </qresource>
 </RCC>
