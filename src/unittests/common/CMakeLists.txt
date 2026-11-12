@@ -35,3 +35,6 @@ foreach(displayTest DisplayRoutingTests DesktopWorkspaceTests)
     SOURCE ${displayTest}.cpp WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/common")
   set_tests_properties(${displayTest} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 30)
 endforeach()
+
+create_test(NAME RuntimeProfileTests DEPENDS common SOURCE RuntimeProfileTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/common")
