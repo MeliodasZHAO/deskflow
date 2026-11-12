@@ -1,11 +1,13 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
 #include "ComputerSettingsDialog.h"
+#include "gui/DialogPresentation.h"
 #include "ui_ComputerSettingsDialog.h"
 
 #include "gui/config/Computer.h"
@@ -14,8 +16,6 @@
 #include "validators/ValidationError.h"
 
 #include <QMessageBox>
-
-#include <common/Settings.h>
 
 using enum ComputerConfig::SwitchCorner;
 using enum ComputerConfig::Fix;
@@ -29,6 +29,12 @@ ComputerSettingsDialog::ComputerSettingsDialog(QWidget *parent, Computer *comput
 {
 
   ui->setupUi(this);
+  deskflow::gui::prepareFormDialog(this, ui->buttonBox);
+  new deskflow::gui::ResponsiveFormColumns(this, ui->layoutOptions);
+  // Keep both nested columns at the same top edge. Their different natural
+  // heights must not distribute spare vertical space above the shorter column.
+  ui->layoutOptions->setAlignment(ui->layoutLeftSide, Qt::AlignTop);
+  ui->layoutOptions->setAlignment(ui->layoutRightSide, Qt::AlignTop);
   ui->buttonBox->button(QDialogButtonBox::Cancel)->setFocus();
 
   ui->lineNameEdit->setText(m_computer->name());
@@ -57,7 +63,7 @@ ComputerSettingsDialog::ComputerSettingsDialog(QWidget *parent, Computer *comput
   ui->chkDeadBottomRight->setChecked(m_computer->switchCorner(static_cast<int>(BottomRight)));
   ui->sbSwitchCornerSize->setValue(m_computer->switchCornerSize());
 
-  ui->chkWeakX11Focus->setChecked(Settings::value(Settings::Computer::WeakX11Focus.arg(m_computer->name())).toBool());
+  ui->chkWeakX11Focus->setChecked(m_computer->weakX11Focus());
 
   ui->chkFixCapsLock->setChecked(m_computer->fix(CapsLock));
   ui->chkFixNumLock->setChecked(m_computer->fix(NumLock));
@@ -86,9 +92,10 @@ void ComputerSettingsDialog::accept()
     return;
   }
 
-  m_computer->setName(ui->lineNameEdit->text());
-
-  m_computer->aliases().clear();
+  // Keep the caller's draft unchanged until every field has been validated.
+  Computer draft = *m_computer;
+  draft.setName(ui->lineNameEdit->text());
+  draft.aliases().clear();
 
   for (int i = 0; i < ui->listAliases->count(); i++) {
     QString alias(ui->listAliases->item(i)->text());
@@ -100,30 +107,30 @@ void ComputerSettingsDialog::accept()
       );
       return;
     }
-    if (!m_computer->aliases().contains(alias))
-      m_computer->addAlias(alias);
+    if (!draft.aliases().contains(alias))
+      draft.addAlias(alias);
   }
 
-  m_computer->setModifier(KeyboardModifier::Shift, ui->comboShift->currentIndex());
-  m_computer->setModifier(KeyboardModifier::Ctrl, ui->comboCtrl->currentIndex());
-  m_computer->setModifier(KeyboardModifier::Alt, ui->comboAlt->currentIndex());
-  m_computer->setModifier(KeyboardModifier::Meta, ui->comboMeta->currentIndex());
-  m_computer->setModifier(KeyboardModifier::Super, ui->comboSuper->currentIndex());
-  m_computer->setModifier(KeyboardModifier::AltGr, ui->comboAltGr->currentIndex());
+  draft.setModifier(KeyboardModifier::Shift, ui->comboShift->currentIndex());
+  draft.setModifier(KeyboardModifier::Ctrl, ui->comboCtrl->currentIndex());
+  draft.setModifier(KeyboardModifier::Alt, ui->comboAlt->currentIndex());
+  draft.setModifier(KeyboardModifier::Meta, ui->comboMeta->currentIndex());
+  draft.setModifier(KeyboardModifier::Super, ui->comboSuper->currentIndex());
+  draft.setModifier(KeyboardModifier::AltGr, ui->comboAltGr->currentIndex());
 
-  m_computer->setSwitchCorner(TopLeft, ui->chkDeadTopLeft->isChecked());
-  m_computer->setSwitchCorner(TopRight, ui->chkDeadTopRight->isChecked());
-  m_computer->setSwitchCorner(BottomLeft, ui->chkDeadBottomLeft->isChecked());
-  m_computer->setSwitchCorner(BottomRight, ui->chkDeadBottomRight->isChecked());
-  m_computer->setSwitchCornerSize(ui->sbSwitchCornerSize->value());
+  draft.setSwitchCorner(TopLeft, ui->chkDeadTopLeft->isChecked());
+  draft.setSwitchCorner(TopRight, ui->chkDeadTopRight->isChecked());
+  draft.setSwitchCorner(BottomLeft, ui->chkDeadBottomLeft->isChecked());
+  draft.setSwitchCorner(BottomRight, ui->chkDeadBottomRight->isChecked());
+  draft.setSwitchCornerSize(ui->sbSwitchCornerSize->value());
 
-  m_computer->setFix(CapsLock, ui->chkFixCapsLock->isChecked());
-  m_computer->setFix(NumLock, ui->chkFixNumLock->isChecked());
-  m_computer->setFix(ScrollLock, ui->chkFixScrollLock->isChecked());
-  m_computer->setFix(XTest, ui->chkFixXTest->isChecked());
+  draft.setFix(CapsLock, ui->chkFixCapsLock->isChecked());
+  draft.setFix(NumLock, ui->chkFixNumLock->isChecked());
+  draft.setFix(ScrollLock, ui->chkFixScrollLock->isChecked());
+  draft.setFix(XTest, ui->chkFixXTest->isChecked());
+  draft.setWeakX11Focus(ui->chkWeakX11Focus->isChecked());
 
-  Settings::setValue(Settings::Computer::WeakX11Focus.arg(m_computer->name()), ui->chkWeakX11Focus->isChecked());
-
+  *m_computer = draft;
   QDialog::accept();
 }
 
