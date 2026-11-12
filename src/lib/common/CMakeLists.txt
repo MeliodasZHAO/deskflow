@@ -60,3 +60,22 @@ elseif(WIN32)
 endif()
 
 target_link_libraries(common PRIVATE Qt6::Gui)
+
+target_sources(common PRIVATE
+  CandidatePolicy.cpp
+  CandidatePolicy.h
+  RuntimeProfile.cpp
+  RuntimeProfile.h
+  WindowsCredentialFiles.cpp
+  WindowsCredentialFiles.h
+  CredentialStore.cpp
+  CredentialStore.h
+  IsolatedSession.cpp
+  IsolatedSession.h
+  IpcLineBuffer.h
+  LabExecutionPolicy.h
+  ServiceSession.h
+)
+if(WIN32)
+  target_link_libraries(common PRIVATE advapi32)
+endif()
