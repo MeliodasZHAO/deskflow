@@ -308,9 +308,12 @@ private Q_SLOTS:
 #endif
     QFile duplicate(path);
     QVERIFY(!deskflow::lab::CredentialStore::openPrivateCandidateFile(duplicate));
-    QVERIFY(f.open(QIODevice::ReadOnly));
-    QCOMPARE(f.readAll(), QByteArray("SYNTHETIC-NOT-A-KEY"));
-    f.close();
+    // Windows writes through an adopted descriptor. Read the named file with
+    // a fresh object rather than reopening that closed descriptor wrapper.
+    QFile reader(path);
+    QVERIFY2(reader.open(QIODevice::ReadOnly), qPrintable(reader.errorString()));
+    QCOMPARE(reader.readAll(), QByteArray("SYNTHETIC-NOT-A-KEY"));
+    reader.close();
     QFile foreign(root + "/tls/deskflow.pem");
     QVERIFY(!deskflow::lab::CredentialStore::openPrivateCandidateFile(foreign));
     QVERIFY(!foreign.exists());

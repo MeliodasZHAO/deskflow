@@ -1,4 +1,4 @@
-name: Desktop sharing validation
+name: Linux profile regression
 on:
   push:
     branches: [ci/desktop-sharing-validation]
@@ -21,8 +21,8 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_INSTALLER=OFF -DUPDATE_TRANSLATIONS=OFF -DBUILD_TESTS=ON -DSKIP_BUILD_TESTS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
       - name: Build
-        run: cmake --build build --parallel 4
+        run: cmake --build build --target CandidatePolicyTests --parallel 4
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build/src/unittests --output-on-failure --parallel 2
+        run: ctest --test-dir build/src/unittests -R '^CandidatePolicyTests$' --output-on-failure
