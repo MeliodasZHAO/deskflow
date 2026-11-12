@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,6 +8,8 @@
 
 #include "TlsUtility.h"
 
+#include "common/CandidatePolicy.h"
+#include "common/CredentialStore.h"
 #include "common/Settings.h"
 #include "net/SecureUtils.h"
 
@@ -100,6 +103,16 @@ QByteArray certFingerprint(const QString &certPath)
 
 bool generateCertificate()
 {
+#ifdef DESKFLOW_UI_REVIEW_BUILD
+  return false;
+#endif
+#ifdef DESKFLOW_CANDIDATE_BUILD
+  if (!deskflow::candidate::securityProfile(
+          Settings::settingsFile(), Settings::value(Settings::Security::Certificate).toString(), isEnabled(),
+          Settings::value(Settings::Security::CheckPeers).toBool()
+      ))
+    return false;
+#endif
   qDebug(
       "generating tls certificate, "
       "all clients must trust the new fingerprint"
@@ -109,6 +122,11 @@ bool generateCertificate()
   const auto certPath = Settings::value(Settings::Security::Certificate).toString();
 
   QFileInfo info(certPath);
+#ifdef DESKFLOW_CANDIDATE_BUILD
+  if (!QDir().mkpath(QFileInfo(info.absolutePath()).absolutePath()) ||
+      !deskflow::lab::CredentialStore::ensurePrivateCandidateDirectory(info.absolutePath()))
+    return false;
+#endif
   if (QDir dir(info.absolutePath()); !dir.exists() && !dir.mkpath(".")) {
     qCritical("failed to create directory for tls certificate");
     return false;
