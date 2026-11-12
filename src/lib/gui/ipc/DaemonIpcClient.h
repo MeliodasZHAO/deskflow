@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025-2026 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -21,11 +22,15 @@ public:
   void sendLogLevel(const QString &logLevel);
   void sendConfigFile(const QString &configFile);
   void sendStartProcess();
+  virtual void sendPeerSession(const QString &encoded);
+  virtual void sendPeerStop(const QString &token);
   void sendStopProcess();
   void sendClearSettings();
   void requestLogPath();
 
 Q_SIGNALS:
+  void peerStopped(const QString &token);
+  void peerSessionRejected(const QString &token);
   void logPathReceived(const QString &logPath);
 
 protected:

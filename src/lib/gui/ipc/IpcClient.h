@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025-2026 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -56,6 +57,8 @@ protected:
   void sendMessage(const QString &message);
 
 private:
+  friend class IpcLifecycleTests;
+  void beginConnection();
   void attemptConnection();
   void handleHandshakeMessage(const QStringList &parts);
   void handleConnectionSuccess();
@@ -67,6 +70,9 @@ private:
   QByteArray m_readBuffer;
   int m_retryCount{0};
   QString m_typeName;
+  quint64 m_connectionGeneration = 0;
+  bool m_shouldConnect = false;
+  QMetaObject::Connection m_connectedAttempt, m_failedAttempt;
 };
 
 } // namespace deskflow::gui::ipc

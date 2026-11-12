@@ -187,3 +187,19 @@ endif()
 if(APPLE)
  target_link_libraries(gui PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation")
 endif()
+
+target_sources(gui PRIVATE
+  core/AutomaticRecovery.cpp
+  core/AutomaticRecovery.h
+  core/PowerMonitor.cpp
+  core/PowerMonitor.h
+  dialogs/AutomaticRecoveryDialog.cpp
+  dialogs/AutomaticRecoveryDialog.h
+  dialogs/DiagnosticExportDialog.cpp
+  dialogs/DiagnosticExportDialog.h
+  widgets/ConnectionDiagnostics.cpp
+  widgets/ConnectionDiagnostics.h
+)
+if(APPLE)
+ target_link_libraries(gui PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation")
+endif()
