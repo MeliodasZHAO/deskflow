@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2024 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
 # SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
@@ -47,6 +48,8 @@ if(WIN32)
   endif()
 endif()
 
-add_subdirectory(deskflow-core)
-add_subdirectory(deskflow-daemon) #Only used on windows
+if(NOT DESKFLOW_UI_REVIEW_BUILD)
+  add_subdirectory(deskflow-core)
+  add_subdirectory(deskflow-daemon) #Only used on windows
+endif()
 add_subdirectory(deskflow-gui)
