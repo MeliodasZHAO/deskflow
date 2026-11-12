@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -45,7 +46,13 @@ static const int16_t kProtocolMajorVersion = 1;
  * @note When incrementing the minor version, the Deskflow application version should also increment
  * @since Protocol version 1.0
  */
-static const int16_t kProtocolMinorVersion = 8;
+static const int16_t kProtocolMinorVersion = 9;
+// Candidate extension 1.9: DTOP followed by two length-prefixed strings
+// (configured computer name, bounded schema-1 JSON display topology). Sent only
+// after TLS peer verification when both sides negotiate 1.9. Empty JSON payload
+// means unavailable. Original DINF and all <=1.8 formats remain unchanged.
+// DTOP follows DINF on client shape changes; stale topology is invalidated first.
+// Old peers and absent/changed saved displays use the explicit aggregate layout.
 
 /**
  * @brief Default TCP port for Deskflow connections

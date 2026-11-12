@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
@@ -62,7 +63,7 @@ public:
   void handleClientDisconnected();
   Client *openClient(const std::string &name, const NetworkAddress &address, deskflow::Computer *computer);
   void closeClient(Client *client);
-  bool startClient();
+  virtual bool startClient();
   void stopClient();
   Client *getClientPtr()
   {
@@ -85,11 +86,16 @@ public:
   double retryTime() const;
 
 private:
+  void cancelClientRestart();
   ISocketFactory *getSocketFactory() const;
   NetworkAddress &getCurrentServerAddress();
   void tryNextServer();
 
   bool m_suspended = false;
+  bool m_retryAllowed = true;
+  bool m_fatalConnectionRefusal = false;
+  quint64 m_retryGeneration = 0;
+  EventQueueTimer *m_restartTimer = nullptr;
   Client *m_client = nullptr;
   deskflow::Computer *m_clientComputer = nullptr;
   QList<NetworkAddress> m_serverAddresses;

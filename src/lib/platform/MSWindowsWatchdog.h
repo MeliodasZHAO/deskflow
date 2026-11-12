@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2025 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -48,7 +49,8 @@ public:
   /**
    * @brief Set the command to run and whether to elevate the process.
    */
-  void setProcessConfig(const std::string_view &command, bool elevate);
+  void setProcessConfig(const std::string_view &command, bool elevate, bool guiManaged = false);
+  bool quiescent();
 
   /**
    * @brief Stop the main loop and output loop threads.
@@ -136,6 +138,7 @@ private:
   HANDLE m_outputWritePipe = nullptr;
   HANDLE m_outputReadPipe = nullptr;
   bool m_elevateProcess = false;
+  bool m_guiManaged = false;
   MSWindowsSession m_session;
   int m_startFailures = 0;
   FileLogOutputter &m_fileLogOutputter;

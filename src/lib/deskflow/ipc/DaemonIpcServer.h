@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025-2026 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -21,6 +22,10 @@ class DaemonIpcServer : public IpcServer
 
 public:
   explicit DaemonIpcServer(QObject *parent, const QString &logFilename);
+
+Q_SIGNALS:
+  void peerSessionRequested(const QString &encoded);
+  void peerStopRequested(const QString &token);
 
 private:
   void processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts) override;
