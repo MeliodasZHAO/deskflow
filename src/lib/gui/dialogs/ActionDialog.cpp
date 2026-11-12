@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
@@ -7,6 +8,7 @@
  */
 
 #include "ActionDialog.h"
+#include "gui/DialogPresentation.h"
 #include "ui_ActionDialog.h"
 
 #include "common/Action.h"
@@ -63,6 +65,7 @@ ActionDialog::ActionDialog(QWidget *parent, const ServerConfig &config, Hotkey &
   ui->comboSwitchInDirection->setVisible(false);
   ui->comboLockCursorToComputer->setVisible(false);
 
+  deskflow::gui::prepareFormDialog(this, ui->buttonBox);
   actionTypeChanged(ui->comboActionType->currentIndex());
 }
 
@@ -103,10 +106,9 @@ void ActionDialog::accept()
 
 void ActionDialog::updateSize()
 {
-  setMaximumSize(QSize(16777215, 1677215));
-  adjustSize();
-  if (!isKeyAction(ui->comboActionType->currentIndex()))
-    setMaximumSize(size());
+  // Changing action type changes the content, never the user's window size.
+  if (layout())
+    layout()->activate();
 }
 
 void ActionDialog::keySequenceChanged()

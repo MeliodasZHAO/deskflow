@@ -203,3 +203,24 @@ target_sources(gui PRIVATE
 if(APPLE)
  target_link_libraries(gui PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation")
 endif()
+
+target_sources(gui PRIVATE
+  core/MacStartupExecutor.cpp
+  core/MacStartupExecutor.h
+  core/StartupHandoff.cpp
+  core/StartupHandoff.h
+  core/StartupRecovery.cpp
+  core/StartupRecovery.h
+  core/StartupRecoveryReader.cpp
+  core/WindowsStartupProvider.cpp
+  core/WindowsStartupProvider.h
+  dialogs/CandidatePermissionDialog.cpp
+  dialogs/CandidatePermissionDialog.h
+  dialogs/StartupRecoveryDialog.cpp
+  dialogs/StartupRecoveryDialog.h
+  dialogs/WindowsStartupDialog.cpp
+  dialogs/WindowsStartupDialog.h
+)
+if(WIN32)
+ target_link_libraries(gui PRIVATE taskschd ole32 oleaut32 advapi32)
+endif()
