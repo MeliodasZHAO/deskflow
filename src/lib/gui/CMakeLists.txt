@@ -146,3 +146,44 @@ target_sources(gui PRIVATE
   widgets/FlowLayout.h
   widgets/OptionControl.h
 )
+
+target_sources(gui PRIVATE
+  IdentityBindings.cpp
+  IdentityBindings.h
+  RecentServerHistory.cpp
+  RecentServerHistory.h
+  core/ConfiguredTlsProbe.cpp
+  core/ConfiguredTlsProbe.h
+  core/DeviceRecovery.cpp
+  core/DeviceRecovery.h
+  core/DiscoveryCatalog.cpp
+  core/DiscoveryCatalog.h
+  core/DiscoveryScope.cpp
+  core/DiscoveryScope.h
+  core/DiscoveryTransport.h
+  core/DiscoveryTransportMac.cpp
+  core/DiscoveryTransportWin.cpp
+  core/NearbyDiscovery.cpp
+  core/NearbyDiscovery.h
+  core/NearbyPublisher.cpp
+  core/NearbyPublisher.h
+  core/RecoveryProbe.cpp
+  core/RecoveryProbe.h
+  core/ScopedAddressResolver.cpp
+  dialogs/NearbyDevicesDialog.cpp
+  dialogs/NearbyDevicesDialog.h
+  dialogs/PairingReviewDialog.cpp
+  dialogs/PairingReviewDialog.h
+  dialogs/TrustedDevicesDialog.cpp
+  dialogs/TrustedDevicesDialog.h
+  widgets/RecentServersButton.cpp
+  widgets/RecentServersButton.h
+)
+if(WIN32)
+ target_link_libraries(gui PRIVATE dnsapi iphlpapi)
+ target_compile_definitions(gui PRIVATE UNICODE _UNICODE _WIN32_WINNT=0x0601 NTDDI_VERSION=0x06010000)
+endif()
+
+if(APPLE)
+ target_link_libraries(gui PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation")
+endif()
