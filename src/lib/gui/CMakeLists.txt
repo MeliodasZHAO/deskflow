@@ -124,3 +124,25 @@ target_link_libraries(${target}
     net
     Qt6::Widgets
 )
+
+target_sources(gui PRIVATE
+  ../experience/LayoutModel.cpp
+  ../experience/LayoutModel.h
+  DialogPresentation.h
+  ExperienceStyle.h
+  config/DesktopLayout.cpp
+  config/DesktopLayout.h
+  config/MonitorLayoutDraft.cpp
+  config/MonitorLayoutDraft.h
+  config/MonitorTopology.cpp
+  config/MonitorTopology.h
+  dialogs/DesktopLayoutEditor.cpp
+  dialogs/DesktopLayoutEditor.h
+  dialogs/DisplayTopologyDialog.cpp
+  dialogs/DisplayTopologyDialog.h
+  widgets/ActionButton.h
+  widgets/DesktopWorkspaceView.cpp
+  widgets/DesktopWorkspaceView.h
+  widgets/FlowLayout.h
+  widgets/OptionControl.h
+)
