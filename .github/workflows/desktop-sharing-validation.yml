@@ -39,8 +39,12 @@ jobs:
       - name: Diagnose isolated profile failure
         if: failure() && steps.configure.outcome == 'success'
         run: |
-          & .\build\src\unittests\common\CandidatePolicyTests.exe -v1
-          exit $LASTEXITCODE
+          $env:QT_FORCE_STDERR_LOGGING = '1'
+          & .\build\src\unittests\common\CandidatePolicyTests.exe -v2 -o candidate-policy.txt,txt
+          $policyExit = $LASTEXITCODE
+          Write-Host "Candidate policy native exit: $policyExit"
+          if (Test-Path candidate-policy.txt) { Get-Content candidate-policy.txt }
+          exit $policyExit
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -48,4 +52,5 @@ jobs:
           path: |
             build/src/unittests/Testing/Temporary/LastTest.log
             build/src/unittests/windows-results.xml
+            candidate-policy.txt
           if-no-files-found: ignore
