@@ -125,7 +125,7 @@ class FullHomeTests : public QObject
   }
 private Q_SLOTS:
 #ifdef DESKFLOW_UI_REVIEW_BUILD
-  void fullWindowRoutesReachTheRealDialogsWithoutExecution()
+  void settingsDiscoveryAndArrangementDialogsRemainInert()
   {
     Settings::setValue(Settings::Core::CoreMode, Settings::CoreMode::None);
     Settings::setValue(Settings::Client::RemoteHost, QString());
@@ -157,6 +157,9 @@ private Q_SLOTS:
     QVERIFY(inspected);
     QCOMPARE(Settings::value(Settings::Core::Port), port);
     home->findChild<QPushButton *>("homeReceive")->click();
+    auto receiveState = home->state();
+    receiveState.identityReady = true; // Presentation fixture only; no credentials or trust are created.
+    home->setState(receiveState);
     inspected = false;
     QTimer::singleShot(0, &window, [&] {
       auto *dialog = qobject_cast<deskflow::gui::NearbyDevicesDialog *>(QApplication::activeModalWidget());
@@ -177,6 +180,10 @@ private Q_SLOTS:
     QTest::keyClick(address, Qt::Key_Escape);
     home->showRoleSelection();
     home->findChild<QPushButton *>("homeShare")->click();
+    auto shareState = home->state();
+    shareState.identityReady = true;
+    shareState.canStart = false;
+    home->setState(shareState);
     capture(window, "full-route-share-before-layout");
     inspected = false;
     QTimer::singleShot(0, &window, [&] {
@@ -237,7 +244,10 @@ private Q_SLOTS:
       QTest::keyClick(editor, Qt::Key_Escape);
       QVERIFY(!dialog->isVisible());
     });
-    home->findChild<QPushButton *>("homeLayout")->click();
+    // Arrangement is now embedded in the main workspace. Exercise the
+    // same production editor dialog directly for its draft/advanced controls.
+    ServerConfigDialog layoutDialog(&window, window.serverConfig());
+    layoutDialog.exec();
     QVERIFY(inspected);
     QVERIFY(home->isVisible());
     QVERIFY(!deskflow::gui::TlsUtility::generateCertificate());
@@ -359,7 +369,7 @@ private Q_SLOTS:
     QVERIFY(address->isVisible());
     capture(window, "controller-manual-entry");
     const auto fieldBottom = address->mapTo(home, QPoint(0, address->height())).y();
-    const auto actionTop = home->findChild<QPushButton *>("homePrimary")->mapTo(home, QPoint()).y();
+    const auto actionTop = home->findChild<QPushButton *>("homeAddressSubmit")->mapTo(home, QPoint()).y();
     QVERIFY(actionTop - fieldBottom < 100);
     window.resize(1024, 740);
     capture(window, "controller-manual-entry-large");

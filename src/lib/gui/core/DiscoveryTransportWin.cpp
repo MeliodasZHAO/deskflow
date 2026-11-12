@@ -7,9 +7,12 @@
 #ifdef DESKFLOW_DNSSD_WINDOWS_TEST
 #include "DnsApiTestShim.h"
 #else
-#include <windns.h>
-#include <windows.h>
+// Winsock and Windows base types must precede DNS SDK declarations.
 #include <winsock2.h>
+
+#include <windows.h>
+
+#include <windns.h>
 #endif
 #include <QElapsedTimer>
 #include <QTimer>
