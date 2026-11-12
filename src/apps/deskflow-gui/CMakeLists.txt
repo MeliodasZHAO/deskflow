@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-FileCopyrightText: (C) 2024 Symless Ltd
 # SPDX-License-Identifier: MIT
@@ -119,9 +120,9 @@ if(DESKFLOW_LAB_BUILD)
   endif()
   add_library(LabDaemonSourceCompile OBJECT ../deskflow-daemon/DaemonApp.cpp)
   target_link_libraries(LabDaemonSourceCompile PRIVATE app platform Qt6::Network)
-  add_executable(LabCandidatePolicyTests ../../unittests/gui/core/CandidatePolicyTests.cpp)
+  add_executable(LabCandidatePolicyTests ../../unittests/common/CandidatePolicyTests.cpp)
   target_link_libraries(LabCandidatePolicyTests PRIVATE common Qt6::Test)
-  add_executable(LabRuntimeProfileTests ../../unittests/gui/core/RuntimeProfileTests.cpp)
+  add_executable(LabRuntimeProfileTests ../../unittests/common/RuntimeProfileTests.cpp)
   target_link_libraries(LabRuntimeProfileTests PRIVATE common Qt6::Test)
   add_executable(LabAutomaticRecoveryTests ../../unittests/gui/core/AutomaticRecoveryTests.cpp)
   add_executable(LabWindowsStartupProviderTests "${CMAKE_SOURCE_DIR}/native-tests/WindowsStartupProviderTests.cpp")

@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
@@ -101,4 +102,5 @@ private:
   size_t m_currentServerIndex = 0;
   size_t m_lastServerAddressIndex = 0;
   uint m_retryCount = 0;
+  uint m_duplicateRetries = 0;
 };

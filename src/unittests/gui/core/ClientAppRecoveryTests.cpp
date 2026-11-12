@@ -134,6 +134,67 @@ private Q_SLOTS:
     QCOMPARE(app.attempts, 0);
     app.stopClient();
   }
+  void duplicateSessionRetriesAreBoundedAndStopAfterExhaustion()
+  {
+    RecordingQueue q;
+    SafeClient app(&q);
+    for (int i = 0; i < 4; ++i) {
+      auto *failure = new Client::FailInfo("old session still present");
+      failure->m_refusalReason = deskflow::core::ConnectionRefusal::AlreadyConnected;
+      app.handleClientRefused(
+          Event(EventTypes::ClientConnectionRefused, nullptr, failure, Event::EventFlags::DontFreeData)
+      );
+      if (i < 3) {
+        QCOMPARE(q.quit, 0);
+        QCOMPARE(q.created, i + 1);
+        QVERIFY(!q.handlers.empty());
+        auto callback = q.handlers.begin()->second;
+        callback(Event(EventTypes::Timer));
+        QCOMPARE(app.attempts, i + 1);
+      }
+    }
+    QCOMPARE(q.created, 3);
+    QCOMPARE(q.quit, 1);
+    app.scheduleClientRestart(1);
+    QCOMPARE(q.created, 3);
+    app.stopClient();
+  }
+  void stoppingCancelsDuplicateSessionRecovery()
+  {
+    RecordingQueue q;
+    SafeClient app(&q);
+    auto *failure = new Client::FailInfo("old session still present");
+    failure->m_refusalReason = deskflow::core::ConnectionRefusal::AlreadyConnected;
+    app.handleClientRefused(
+        Event(EventTypes::ClientConnectionRefused, nullptr, failure, Event::EventFlags::DontFreeData)
+    );
+    QCOMPARE(q.created, 1);
+    auto callback = q.handlers.begin()->second;
+    app.stopClient();
+    callback(Event(EventTypes::Timer));
+    QCOMPARE(app.attempts, 0);
+  }
+  void connectionSuccessResetsDuplicateSessionBudget()
+  {
+    RecordingQueue q;
+    SafeClient app(&q);
+    for (int cycle = 0; cycle < 2; ++cycle) {
+      for (int i = 0; i < 3; ++i) {
+        auto *failure = new Client::FailInfo("old session still present");
+        failure->m_refusalReason = deskflow::core::ConnectionRefusal::AlreadyConnected;
+        app.handleClientRefused(
+            Event(EventTypes::ClientConnectionRefused, nullptr, failure, Event::EventFlags::DontFreeData)
+        );
+        QCOMPARE(q.quit, 0);
+        QVERIFY(!q.handlers.empty());
+        auto callback = q.handlers.begin()->second;
+        callback(Event(EventTypes::Timer));
+      }
+      app.handleClientConnected();
+    }
+    QCOMPARE(q.created, 6);
+    app.stopClient();
+  }
   void rejectedAuthenticationCancelsRecoveryAcrossAddressChanges()
   {
     RecordingQueue q;

@@ -1,69 +1,78 @@
 <!-- SPDX-FileCopyrightText: (C) 2026 Deskflow Developers -->
 <!-- SPDX-License-Identifier: MIT -->
 
-# Desktop sharing experience: draft integration
+# Desktop sharing workspace: integration notes
 
-This change collects a privately developed macOS/Windows sharing experience into
-one reviewable branch based on upstream master. It is a large experimental change;
-it is not ready to merge. Code and this technical inventory were prepared with AI.
+This branch is a large draft, not a merge-ready release. Code and these technical
+notes were prepared with AI; the contributor is responsible for understanding and
+explaining the change. The PR description and community messages must be written
+by its human contributor.
 
-## Scope
+## Changes intended for the normal application
 
-- A common connection overview, keyboard supplier/receiver roles, stable status
-  areas, concise controls, Chinese translations and responsive widget layouts.
-- macOS permission onboarding with rechecking and a clear paused state.
-- Scoped LAN discovery, saved computers, identity comparison and authenticated
-  peer bindings; explicit pairing remains necessary for unknown peers.
-- Address and connection recovery, sleep/wake signals and explicit pause handling.
-- Native display topology, per-display routing messages and compatibility fallback.
-- A shared display workspace with dragging, snapping, overlap validation,
-  editable drafts, persistence, and read-only applied topology on the receiver.
-- Isolated Candidate settings, packaging identities, startup/recovery providers,
-  credential storage and synthetic regression fixtures.
+- A shared connection overview with explicit input supplier/receiver roles,
+  concise actions, Chinese translations, stable reconnect status height and
+  responsive layouts.
+- macOS input-permission onboarding before the main window or input core starts.
+- Scoped LAN discovery, saved peers and explicit identity comparison. Unknown
+  devices are never trusted merely because they advertise a familiar name.
+- Address recovery uses the configured TLS identity and the saved peer's SHA-256
+  certificate pin. It binds to the selected local address, verifies an actual TLS
+  handshake and certificate lifetime, sends no Deskflow client name or input
+  messages, and stops when the selected interface changes. The ordinary build no
+  longer depends on the Candidate credential-staging helper for this operation.
+- Native display topology, a validated workspace model, display arrangement drafts
+  and per-display routing messages negotiated with compatible encrypted peers.
+  The input supplier owns the arrangement; receivers show the applied snapshot.
+  Older peers retain the compatibility computer arrangement.
+- Explicit pause/stop remains authoritative. Queued recovery callbacks cannot
+  resume a stopped session. A duplicate client name receives three four-second
+  retries for old-session expiry, followed by an explicit manual retry action.
+  Recovery never evicts another client, renames the computer or changes trust.
 
-## Build boundaries and remaining work
+## Compatibility and draft boundaries
 
-The default Deskflow build and the separately named Candidate build are different
-configurations of the same source tree. Several network-probe and startup paths
-remain Candidate-only. Default Deskflow builds must not be described as having
-passed the Candidate installation and physical-device checks.
+The workspace and correlated recovery are designed around TLS and peer checking.
+Existing insecure configurations need explicit compatibility review; successful
+compilation does not establish that every old non-TLS workflow is preserved.
+The protocol extension, IPC lifecycle and identity changes require maintainer
+review before merging.
 
-`DESKFLOW_CANDIDATE_BUILD=ON` selects the independently named Candidate and its
-isolated settings. `DESKFLOW_LAB_BUILD=ON` disables input/core execution for
-synthetic GUI tests. `DESKFLOW_UI_REVIEW_BUILD=ON` additionally provides an inert
-UI review entry point. These modes are mutually constrained by CMake. Native
-installers and startup persistence need platform-specific review; macOS Candidate
-packages are built with `BUILD_INSTALLER=OFF`.
+The Candidate/Lab build options are optional evaluation variants, not separate
+implementations of the UI. Candidate settings, credentials, service identities and
+packages remain isolated. Lab fixtures disable input/core execution. Candidate
+startup recovery plans and mutation providers are not a verified migration path
+for normal upstream startup settings. macOS startup mutations stay off by default.
+The Linux native discovery fallback reports unsupported functionality and retains
+manual connection; a Linux compile result does not establish full native feature
+parity. Fullscreen interactions, secure-input boundaries and privileged desktops
+have not been established as fixed and are not bypassed.
 
-Linux has fallback behavior for unsupported native discovery/display providers.
-A Linux compile/test result does not establish Linux feature parity. The
-fullscreen interactions mentioned during development have not been validated;
-this draft does not claim to fix them. Secure desktops, macOS secure input and
-system authorization prompts are not bypassed.
+## Validation
 
-The protocol extension and credential/startup changes need particular maintainer
-review, including compatibility with unmodified peers, topology updates during
-reconnects and migration into the normal upstream runtime. The UI still has
-workflow and polish work outstanding. No project issue is claimed fixed solely
-from the local user report.
-
-## Reproducing checks
-
-Configure the normal build with `BUILD_TESTS=ON`, `SKIP_BUILD_TESTS=ON` and
-`BUILD_INSTALLER=OFF`, then build and run:
+Normal builds use `BUILD_TESTS=ON`, `SKIP_BUILD_TESTS=ON`, and
+`BUILD_INSTALLER=OFF`. Keep translation editing separate with
+`UPDATE_TRANSLATIONS=OFF` when reproducing a frozen validation tree.
 
 ```sh
+cmake --build build --parallel 2
 ctest --test-dir build/src/unittests --output-on-failure
 ```
 
-The standard suite includes the connection overview, topology protocol,
-IPC cancellation/fragmentation and runtime-profile fixtures. GUI tests need Qt's
-SVG image plugin; headless runs use `QT_QPA_PLATFORM=offscreen`. Additional isolated
-fixtures are kept under `native-tests/`; their CMake projects reference only files
-inside this repository. Lab-only lifecycle tests use synthetic peers and isolated
-settings, and must not be represented as physical keyboard/mouse verification.
+Headless widget tests use `QT_QPA_PLATFORM=offscreen` and require the Qt SVG image
+plugin. `ConfiguredTlsProbeTests` makes real TLS connections only to an isolated
+loopback fixture with generated test identities. A test subclass permits that
+loopback endpoint; the production policy separately rejects it. The suite checks
+matching/mismatched pins, expired peers, cancellation and interface changes.
 
-A locally installed Candidate was used on macOS and Windows 11. The user reported
-that the two computers were connected and input sharing was working. This is
-limited user acceptance evidence, not exhaustive coverage of every feature or
-both input directions. Upstream integration checks are recorded independently.
+Visual comparisons distinguish real application captures, fixed widget examples
+and missing evidence. Synthetic connected-state screenshots are not evidence of
+physical input delivery. Keyboard/mouse acceptance is recorded separately from
+unit-test counts, and neither screenshot totals nor QtTest setup/cleanup entries
+are presented as business coverage.
+
+Before requesting reopening, each proposed commit must compile, the final tree
+must be built/tested on macOS, Windows and Linux, and current results must replace
+old snapshot results. An earlier candidate installation or test run is not proof
+that a newly reorganized normal build passes. The external contributor must
+perform the final PR edits and community request in accordance with AGENTS.md.

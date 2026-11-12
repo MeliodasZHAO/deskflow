@@ -3070,8 +3070,8 @@ Enabling this setting will disable the server config GUI.</source>
             <translation>辅助功能</translation>
         </message>
         <message>
-            <source>Check DeskflowCandidate in System Settings &gt; Privacy &amp; Security &gt; %1.</source>
-            <translation>请在“系统设置 &gt; 隐私与安全 &gt; %1”中查看 DeskflowCandidate。</translation>
+            <source>Check %1 in System Settings &gt; Privacy &amp; Security &gt; %2.</source>
+            <translation>请在“系统设置 &gt; 隐私与安全 &gt; %2”中查看 %1。</translation>
         </message>
         <message>
             <source>Request system permission</source>

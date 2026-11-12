@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-License-Identifier: MIT
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM 1)

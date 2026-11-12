@@ -14,6 +14,8 @@ if(APPLE)
 endif()
 
 add_library(${target} STATIC
+  core/ConfiguredTlsProbe.cpp
+  core/ConfiguredTlsProbe.h
   dialogs/WindowsStartupDialog.cpp
   dialogs/WindowsStartupDialog.h
   core/WindowsStartupProvider.cpp

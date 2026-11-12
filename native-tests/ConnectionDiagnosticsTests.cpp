@@ -263,8 +263,34 @@ private Q_SLOTS:
     QSignalSpy settings(&d, &ConnectionDiagnostics::settingsRequested);
     QSignalSpy reconnect(&d, &ConnectionDiagnostics::reconnectRequested);
     d.findChild<QPushButton *>("diagnosticAction")->click();
-    QCOMPARE(settings.count(), 1);
-    QCOMPARE(reconnect.count(), 0);
+    const bool duplicate = ConnectionRefusal(reason) == ConnectionRefusal::AlreadyConnected;
+    QCOMPARE(settings.count(), duplicate ? 0 : 1);
+    QCOMPARE(reconnect.count(), duplicate ? 1 : 0);
+  }
+  void duplicateSessionRetryRemainsExplicitAndDebounced()
+  {
+    ConnectionDiagnostics d;
+    start(d);
+    d.connectionRefused(ConnectionRefusal::AlreadyConnected);
+    d.processStateChanged(ProcessState::Stopped);
+    QSignalSpy reconnect(&d, &ConnectionDiagnostics::reconnectRequested);
+    QSignalSpy settings(&d, &ConnectionDiagnostics::settingsRequested);
+    auto *button = d.findChild<QPushButton *>("diagnosticAction");
+    QCOMPARE(button->text(), QString("Retry now"));
+    QVERIFY(button->isEnabled());
+    button->click();
+    button->click();
+    QCOMPARE(reconnect.count(), 1);
+    QCOMPARE(settings.count(), 0);
+    QVERIFY(!button->isEnabled());
+  }
+  void duplicateSessionRetryRespectsDisabledReconnect()
+  {
+    ConnectionDiagnostics d;
+    start(d);
+    d.connectionRefused(ConnectionRefusal::AlreadyConnected);
+    d.setReconnectAllowed(false);
+    QVERIFY(!d.findChild<QPushButton *>("diagnosticAction")->isEnabled());
   }
   void retryButtonUsesExplicitActionAndDebounces()
   {

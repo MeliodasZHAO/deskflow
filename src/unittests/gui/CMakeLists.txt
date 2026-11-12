@@ -26,3 +26,11 @@ qt_add_resources(ConnectionHomeTests connection_home_translations PREFIX "/trans
   BASE "${CMAKE_CURRENT_BINARY_DIR}" FILES ${connectionHomeQm})
 add_dependencies(ConnectionHomeTests ConnectionHomeTestTranslations)
 set_tests_properties(ConnectionHomeTests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 30)
+
+create_test(
+  NAME ConnectionDiagnosticsTests
+  DEPENDS gui
+  SOURCE "${CMAKE_SOURCE_DIR}/native-tests/ConnectionDiagnosticsTests.cpp"
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)
+set_tests_properties(ConnectionDiagnosticsTests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 30)

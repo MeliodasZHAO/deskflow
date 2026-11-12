@@ -96,7 +96,7 @@ ConnectionDiagnostics::ConnectionDiagnostics(QWidget *parent) : QFrame(parent), 
       Q_EMIT manualConnectionRequested();
       return;
     }
-    if (phase() == Phase::NeedsAction) {
+    if (phase() == Phase::NeedsAction && m_attention != Attention::DuplicateName) {
       if (m_attention == Attention::Recovery)
         Q_EMIT recoverySettingsRequested();
       else
@@ -529,11 +529,15 @@ void ConnectionDiagnostics::render()
   const bool action =
       manual || p == Phase::Retrying || p == Phase::Recovering || p == Phase::NeedsAction || p == Phase::Connecting;
   m_action->setVisible(action);
-  m_action->setEnabled(action && !m_actionPending && (manual || p == Phase::NeedsAction || m_reconnectAllowed));
+  m_action->setEnabled(
+      action && !m_actionPending &&
+      (manual || (p == Phase::NeedsAction && m_attention != Attention::DuplicateName) || m_reconnectAllowed)
+  );
   m_action->setText(
-      p == Phase::NeedsAction ? (m_attention == Attention::Recovery ? tr("Review recovery") : tr("Review settings"))
-      : manual                ? tr("Manual connection")
-                              : tr("Retry now")
+      p == Phase::NeedsAction && m_attention != Attention::DuplicateName
+          ? (m_attention == Attention::Recovery ? tr("Review recovery") : tr("Review settings"))
+      : manual ? tr("Manual connection")
+               : tr("Retry now")
   );
   const auto privacy =
       tr("Diagnostics keep up to 64 state codes. No typed text, clipboard, addresses or fingerprints are exported.");

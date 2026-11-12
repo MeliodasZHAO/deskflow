@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2024 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
@@ -25,7 +26,7 @@
 #include <QJsonObject>
 #include <QScrollArea>
 #include <QScrollBar>
-#if defined(Q_OS_MACOS) && defined(DESKFLOW_CANDIDATE_BUILD)
+#if defined(Q_OS_MACOS)
 #include "gui/dialogs/CandidatePermissionDialog.h"
 #include <QOperatingSystemVersion>
 #endif
@@ -33,6 +34,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QLocalSocket>
+#include <QLoggingCategory>
 #include <QMessageBox>
 #include <QSharedMemory>
 #include <QTimer>
@@ -40,10 +42,6 @@
 #if defined(Q_OS_MACOS)
 #include <Carbon/Carbon.h>
 #include <cstdlib>
-#endif
-
-#if defined(Q_OS_UNIX) && defined(QT_DEBUG)
-#include <QLoggingCategory>
 #endif
 
 #if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
@@ -56,7 +54,7 @@ using namespace deskflow::gui;
 bool checkMacAssistiveDevices();
 #endif
 
-#if defined(Q_OS_MACOS) && defined(DESKFLOW_CANDIDATE_BUILD)
+#if defined(Q_OS_MACOS)
 namespace {
 class MacAccessibilityPermissionProvider final : public AccessibilityPermissionProvider
 {
@@ -82,9 +80,12 @@ const static auto kHeader = QStringLiteral("%1: %2\n").arg(kAppName, kDisplayVer
 
 int main(int argc, char *argv[])
 {
+  // Do not show ICC messages
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
   // Fixes Fedora bug where qDebug() messages aren't printed.
   QLoggingCategory::setFilterRules(QStringLiteral("*.debug=true\nqt.*=false"));
+#else
+  QLoggingCategory::setFilterRules(QStringLiteral("qt.gui.icc=false"));
 #endif
 
 #if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
@@ -235,7 +236,6 @@ int main(int argc, char *argv[])
   }
 
 #ifndef DESKFLOW_LAB_BUILD
-#ifdef DESKFLOW_CANDIDATE_BUILD
   MacAccessibilityPermissionProvider permissionProvider;
   if (!permissionProvider.isGranted()) {
     // No MainWindow/core/TLS initialization until the user explicitly continues.
@@ -249,11 +249,6 @@ int main(int argc, char *argv[])
       return s_exitSuccess;
     startupMode = MainWindow::StartupMode::PermissionReview;
   }
-#else
-  if (!checkMacAssistiveDevices()) {
-    return 1;
-  }
-#endif
 #endif
 #endif
 

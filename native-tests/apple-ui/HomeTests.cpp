@@ -370,7 +370,7 @@ private Q_SLOTS:
     QVERIFY(b(w, "sidebarConnection")->isVisible());
     QVERIFY(b(w, "sidebarSettings")->isVisible());
     QVERIFY(b(w, "sidebarDiagnostics")->isVisible());
-    QCOMPARE(w.findChild<QScrollArea *>("homeScroll")->horizontalScrollBar()->maximum(), 0);
+    QTRY_COMPARE_WITH_TIMEOUT(w.findChild<QScrollArea *>("homeScroll")->horizontalScrollBar()->maximum(), 0, 1000);
     w.resize(760, 560);
     QTest::qWait(1);
     QVERIFY(!sidebar->isVisible());

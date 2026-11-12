@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
 #include "common/CandidatePolicy.h"
 #include "common/CredentialStore.h"
+#include "common/IsolatedSession.h"
 #include "common/ServiceSession.h"
 #include "common/Settings.h"
 #include <QDir>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QUuid>
 #include <QXmlStreamReader>
 using namespace deskflow::candidate;
 class CandidatePolicyTests : public QObject
@@ -162,16 +167,31 @@ private Q_SLOTS:
     QVERIFY(QFile::link(target.fileName(), root + "/tls/trusted-servers"));
     QVERIFY(!securityProfile(settings, cert, true, true));
   }
-  void preferencesSurviveFreshSettingsProcessAndUnknownKeysAreRemoved()
+  void publicPreferencesSurviveFreshIsolatedSettingsProcess()
   {
     const auto parent = qEnvironmentVariable("DESKFLOW_TEST_ROOT");
     QVERIFY(!parent.isEmpty());
-    QTemporaryDir dir(parent + "/candidate-settings-XXXXXX");
-    QVERIFY(dir.isValid());
-    const auto root = QFileInfo(dir.path()).canonicalFilePath();
-    QVERIFY(QDir().mkpath(root + "/config/DeskflowLab"));
-    QVERIFY(QDir().mkpath(root + "/state"));
-    QSettings settings(root + "/config/DeskflowLab/DeskflowLab.conf", QSettings::IniFormat);
+    const auto id = QUuid::createUuid().toString(QUuid::Id128);
+    const auto root = parent + '/' + id;
+    for (const auto *directory : {"config/DeskflowLab/tls", "state", "runtime", "logs"})
+      QVERIFY(QDir().mkpath(root + '/' + directory));
+    QFile manifest(root + "/session.json");
+    QVERIFY(manifest.open(QIODevice::WriteOnly));
+    manifest.write(QJsonDocument(
+                       QJsonObject{
+                           {"schema", 1},
+                           {"purpose", "deskflow-lab-network"},
+                           {"session", id},
+                           {"mode", "client"},
+                           {"bindAddress", "127.0.0.1"},
+                           {"peerAddress", "127.0.0.1"},
+                           {"port", 34800},
+                           {"tls", true},
+                           {"peerChecks", true}
+                       }
+    ).toJson());
+    manifest.close();
+    QSettings settings(root + "/fixture-public.conf", QSettings::IniFormat);
     settings.setValue("gui/userPaused", true);
     settings.setValue("gui/identityBindings", "synthetic-bindings");
     settings.setValue("gui/automaticRecovery", "synthetic-recovery");
@@ -183,7 +203,10 @@ private Q_SLOTS:
     child.start(QCoreApplication::applicationFilePath(), {"--settings-fixture", root});
     QVERIFY(child.waitForFinished(5000));
     QCOMPARE(child.exitStatus(), QProcess::NormalExit);
-    QCOMPARE(child.exitCode(), 0);
+    QVERIFY2(
+        child.exitCode() == 0,
+        qPrintable(QString::fromUtf8(child.readAllStandardError()) + QString::fromUtf8(child.readAllStandardOutput()))
+    );
     settings.sync();
     QVERIFY(!settings.contains("gui/unknown-obsolete-key"));
     QVERIFY(settings.value("gui/userPaused").toBool());
@@ -233,19 +256,37 @@ int main(int argc, char **argv)
     const auto parent = QFileInfo(qEnvironmentVariable("DESKFLOW_TEST_ROOT")).canonicalFilePath();
     const auto root = QString::fromLocal8Bit(argv[2]);
     if (parent.isEmpty() || QFileInfo(root).canonicalFilePath() != root || QFileInfo(root).absolutePath() != parent ||
-        !QFileInfo(root).fileName().startsWith("candidate-settings-"))
+        !QRegularExpression("\\A[0-9a-f]{32}\\z").match(QFileInfo(root).fileName()).hasMatch())
       return 2;
+    QCoreApplication app(argc, argv);
+    if (!deskflow::lab::IsolatedSession::activate(root, parent)) {
+      qCritical().noquote() << "Fixture activation:" << deskflow::lab::IsolatedSession::inspect(root, parent).error;
+      return 2;
+    }
+    const auto fixture = root + "/fixture-public.conf";
+    const auto profile = deskflow::lab::IsolatedSession::active()->settings;
+    if (!QFile::copy(fixture, profile)) {
+      qCritical() << "Fixture profile copy failed";
+      return 2;
+    }
     qputenv("XDG_CONFIG_HOME", (root + "/config").toUtf8());
     qputenv("XDG_STATE_HOME", (root + "/state").toUtf8());
-    QCoreApplication app(argc, argv);
     const bool ok = Settings::value("gui/userPaused").toBool() &&
                     Settings::value("gui/identityBindings").toString() == "synthetic-bindings" &&
                     Settings::value("gui/automaticRecovery").toString() == "synthetic-recovery" &&
                     Settings::value("gui/runtimeProfile").toString() == "synthetic-runtime" &&
                     !Settings::value("gui/unknown-obsolete-key").isValid();
     Settings::save(false);
+    if (!QFile::remove(fixture) || !QFile::copy(profile, fixture)) {
+      qCritical() << "Fixture result copy failed";
+      return 2;
+    }
     return ok ? 0 : 3;
   }
+  QTemporaryDir privateRoot;
+  if (!privateRoot.isValid())
+    return 2;
+  qputenv("DESKFLOW_TEST_ROOT", QFileInfo(privateRoot.path()).canonicalFilePath().toUtf8());
   QCoreApplication app(argc, argv);
   CandidatePolicyTests tests;
   return QTest::qExec(&tests, argc, argv);

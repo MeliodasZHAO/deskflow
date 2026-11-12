@@ -43,8 +43,11 @@ CandidatePermissionDialog::CandidatePermissionDialog(
   layout->addWidget(overview);
 
   const auto permissionName = macOSMajorVersion >= 27 ? tr("Device Control and Data Access") : tr("Accessibility");
-  auto *instructions =
-      new QLabel(tr("Check DeskflowCandidate in System Settings > Privacy & Security > %1.").arg(permissionName), this);
+  auto *instructions = new QLabel(
+      tr("Check %1 in System Settings > Privacy & Security > %2.")
+          .arg(QCoreApplication::applicationName(), permissionName),
+      this
+  );
   instructions->setObjectName("permissionInstructions");
   instructions->setWordWrap(true);
   layout->addWidget(instructions);

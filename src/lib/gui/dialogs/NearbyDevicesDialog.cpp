@@ -129,7 +129,7 @@ NearbyDevicesDialog::NearbyDevicesDialog(
         "Only explicitly prepared isolated test credentials are accepted. Production identity files are never imported."
     ));
     connect(credentials, &QPushButton::clicked, this, &NearbyDevicesDialog::preparedSessionRequested);
-#ifdef DESKFLOW_CANDIDATE_BUILD
+#if defined(DESKFLOW_CANDIDATE_BUILD) || !defined(DESKFLOW_LAB_BUILD)
     credentials->hide();
 #endif
   }

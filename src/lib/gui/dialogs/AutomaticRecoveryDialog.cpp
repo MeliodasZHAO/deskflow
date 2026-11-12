@@ -50,7 +50,7 @@ AutomaticRecoveryDialog::AutomaticRecoveryDialog(
   credentials->setEnabled(deskflow::lab::kProbeNetworkExecutionEnabled);
   layout->addWidget(credentials);
   connect(credentials, &QPushButton::clicked, this, &AutomaticRecoveryDialog::preparedSessionRequested);
-#ifdef DESKFLOW_CANDIDATE_BUILD
+#if defined(DESKFLOW_CANDIDATE_BUILD) || !defined(DESKFLOW_LAB_BUILD)
   credentials->hide();
 #endif
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
@@ -61,7 +61,11 @@ AutomaticRecoveryDialog::AutomaticRecoveryDialog(
     m_network->setEnabled(m_enabled->isChecked());
     buttons->button(QDialogButtonBox::Save)->setEnabled(!m_enabled->isChecked() || m_network->currentIndex() > 0);
     m_status->setText(
+#ifdef DESKFLOW_LAB_BUILD
         deskflow::lab::kProbeNetworkExecutionEnabled
+#else
+        true
+#endif
             ? tr("An address is saved only after the original TLS identity is verified. A different network or "
                  "identity needs your action.")
             : tr("Settings can be reviewed here. This build cannot use real networks, credentials or input control.")

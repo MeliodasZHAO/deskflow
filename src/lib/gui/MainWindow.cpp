@@ -1,6 +1,7 @@
 #include "gui/widgets/OptionControl.h"
 /*
  * Deskflow -- mouse and keyboard sharing utility
+// SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 - 2026 Chris Rizzitello <sithord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2024 Synergy App Ltd
@@ -9,6 +10,7 @@
  */
 
 #include "MainWindow.h"
+#include "core/ConfiguredTlsProbe.h"
 #include "gui/widgets/ActionButton.h"
 #include "ui_MainWindow.h"
 #include "widgets/ConnectionHome.h"
@@ -92,6 +94,18 @@
 #endif
 
 using namespace deskflow::gui;
+
+namespace {
+TlsProbeExecutor *makeTlsProbe(QObject *parent, DiscoveryScopeSource scopes, deskflow::lab::RuntimeProfile profile = {})
+{
+#if defined(DESKFLOW_CANDIDATE_BUILD) || defined(DESKFLOW_LAB_BUILD)
+  return new ProcessTlsProbe(parent, std::move(scopes), profile);
+#else
+  Q_UNUSED(profile)
+  return createConfiguredTlsProbe(parent, std::move(scopes));
+#endif
+}
+} // namespace
 
 MainWindow::MainWindow(StartupMode startupMode)
     : m_startupMode(startupMode),
@@ -380,7 +394,7 @@ deskflow::gui::NearbyDevicesDialog *MainWindow::createRecoveryDialog(
     else
       resolver->setParent(nearby);
     if (!executor)
-      executor = new deskflow::gui::ProcessTlsProbe(nearby, source);
+      executor = makeTlsProbe(nearby, source);
     else
       executor->setParent(nearby);
 #ifdef DESKFLOW_CANDIDATE_BUILD
@@ -397,7 +411,7 @@ deskflow::gui::NearbyDevicesDialog *MainWindow::createRecoveryDialog(
         nearby->findChild<QLabel *>("nearbyStatus")
             ->setText(tr("Test credentials were rejected. The saved address and trust are unchanged."));
     });
-    if (!deskflow::lab::kProbeNetworkExecutionEnabled)
+    if (!deskflow::lab::kProbeNetworkExecutionEnabled && qobject_cast<ProcessTlsProbe *>(executor))
       connect(recovery, &deskflow::gui::DeviceRecovery::stateChanged, nearby, [this, nearby](auto state) {
         if (state == deskflow::gui::DeviceRecovery::State::NeedsAction)
           nearby->findChild<QLabel *>("nearbyStatus")
@@ -442,7 +456,7 @@ void MainWindow::setupAutomaticRecovery(
       return discovery->serviceNames(h, p);
     });
   if (!executor)
-    executor = new ProcessTlsProbe(
+    executor = makeTlsProbe(
         nullptr, source,
         Settings::value("gui/runtimeProfile").toByteArray().isEmpty()
             ? deskflow::lab::RuntimeProfile{}
@@ -726,8 +740,8 @@ void MainWindow::refreshConnectionHome()
   state.retrySeconds = m_connectionDiagnostics->retrySeconds();
   using A = ConnectionDiagnostics::Attention;
   const auto attention = m_connectionDiagnostics->attention();
-  if (state.stage == S::NeedsAction &&
-      (attention == A::StartFailed || attention == A::Address || attention == A::Daemon)) {
+  if (state.stage == S::NeedsAction && (attention == A::StartFailed || attention == A::Address ||
+                                        attention == A::Daemon || attention == A::DuplicateName)) {
     state.stage = S::Failed;
     state.canRetry = attention != A::Daemon && state.identityReady && state.canStart &&
                      m_coreProcess.processState() == ProcessState::Stopped;
@@ -852,6 +866,13 @@ void MainWindow::setupControls()
               "Nothing was saved."
           );
         }
+#endif
+#if !defined(DESKFLOW_CANDIDATE_BUILD) && !defined(DESKFLOW_LAB_BUILD)
+        if (policy.enabled && !m_automaticProbe->ready())
+          return tr(
+              "Could not prepare identity verification for recovery. Check this computer’s identity in Settings. "
+              "Nothing was saved."
+          );
 #endif
         if (!m_automaticRecovery->configure(policy))
           return tr("Recovery could not be configured. The previous preference is unchanged.");

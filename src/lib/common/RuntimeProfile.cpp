@@ -91,9 +91,9 @@ QJsonObject RuntimeProfile::preflight() const
     blockers.append("preview-has-no-network-or-input");
   else {
     if (!kProbeNetworkExecutionEnabled)
-      blockers.append("real-network-and-identity-authorization-pending");
+      blockers.append("network-execution-disabled-in-build");
     if (mode == Mode::Candidate && !kCandidateExecutionEnabled)
-      blockers.append("input-and-candidate-installation-authorization-pending");
+      blockers.append("candidate-runtime-disabled-in-build");
   }
   return {{"valid", valid()},           {"mode", name()},           {"port", port},
           {"canExecute", executable()}, {"tlsRequired", true},      {"peerChecksRequired", true},

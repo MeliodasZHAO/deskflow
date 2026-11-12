@@ -137,7 +137,9 @@ if(DESKFLOW_CANDIDATE_BUILD)
   set(CMAKE_PROJECT_REV_FQDN "org.deskflow.candidate")
   add_compile_definitions(DESKFLOW_CANDIDATE_BUILD=1)
   # Explicitly prepared test credentials only; never infer/import a production identity.
-  add_compile_definitions(DESKFLOW_CANDIDATE_SESSIONS_ROOT="${PROJECT_SOURCE_DIR}/../dual-end-test")
+  set(DESKFLOW_CANDIDATE_SESSIONS_ROOT "${PROJECT_BINARY_DIR}/candidate-sessions" CACHE PATH
+    "Root for explicitly prepared isolated Candidate probe credentials")
+  add_compile_definitions(DESKFLOW_CANDIDATE_SESSIONS_ROOT="${DESKFLOW_CANDIDATE_SESSIONS_ROOT}")
 endif()
 set(DESKFLOW_RUNTIME_ID "${CMAKE_PROJECT_NAME}")
 if(DESKFLOW_LAB_BUILD)
