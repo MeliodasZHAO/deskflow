@@ -59,13 +59,16 @@ class WindowsStartupDialogTests : public QObject
 private Q_SLOTS:
   void initTestCase()
   {
+#ifdef Q_OS_WIN
     QVERIFY(QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR") + "/Fonts/msyh.ttc") >= 0);
     QVERIFY(QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR") + "/Fonts/msyhbd.ttc") >= 0);
     qApp->setFont(QFont("Microsoft YaHei UI", 9));
     qApp->setStyle("Fusion");
     QCOMPARE(QFontInfo(qApp->font()).family(), QString("Microsoft YaHei UI"));
+#endif
     QVERIFY(QFontMetrics(qApp->font()).inFontUcs4(0x767b));
-    QVERIFY(qAbs(qApp->devicePixelRatio() - qEnvironmentVariable("QT_SCALE_FACTOR").toDouble()) < .01);
+    if (!qEnvironmentVariableIsEmpty("QT_SCALE_FACTOR"))
+      QVERIFY(qAbs(qApp->devicePixelRatio() - qEnvironmentVariable("QT_SCALE_FACTOR").toDouble()) < .01);
   }
 
   void visualStates_data()

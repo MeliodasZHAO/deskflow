@@ -10,10 +10,12 @@
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0601
 #endif
+#include <winsock2.h>
+
+#include <windows.h>
+
 #include <iphlpapi.h>
 #include <netioapi.h>
-#include <windows.h>
-#include <winsock2.h>
 #endif
 namespace deskflow::gui {
 namespace {

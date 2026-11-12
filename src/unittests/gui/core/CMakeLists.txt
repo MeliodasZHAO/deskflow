@@ -20,7 +20,7 @@ create_test(
 create_test(
   NAME ClientAppRecoveryTests
   DEPENDS app
-  LIBS client server platform Qt6::Widgets
+  LIBS arch base client io mt net platform server Qt6::Widgets
   SOURCE ClientAppRecoveryTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/deskflow"
 )

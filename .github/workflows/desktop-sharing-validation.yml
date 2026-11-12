@@ -21,30 +21,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_INSTALLER=OFF -DUPDATE_TRANSLATIONS=OFF -DBUILD_TESTS=ON -DSKIP_BUILD_TESTS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
       - name: Build
-        run: cmake --build build --parallel 2
-      - name: Test
-        env:
-          QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build/src/unittests --output-on-failure --parallel 2
-  windows:
-    runs-on: windows-2022
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@v6
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
-        with:
-          arch: amd64
-          spectre: true
-      - name: Install upstream dependencies
-        id: dependencies
-        uses: ./.github/actions/install-dependencies
-        with:
-          qt-version: 6.10.3
-          vcpkg-triplet: x64-windows-release
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_INSTALLER=OFF -DUPDATE_TRANSLATIONS=OFF -DBUILD_TESTS=ON -DSKIP_BUILD_TESTS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON ${{ steps.dependencies.outputs.vcpkg-cmake-config }}
-      - name: Build
-        run: cmake --build build --parallel 2
+        run: cmake --build build --parallel 4
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen

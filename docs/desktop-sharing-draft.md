@@ -76,3 +76,21 @@ must be built/tested on macOS, Windows and Linux, and current results must repla
 old snapshot results. An earlier candidate installation or test run is not proof
 that a newly reorganized normal build passes. The external contributor must
 perform the final PR edits and community request in accordance with AGENTS.md.
+
+## Offline integration suites
+
+The optional Lab UI review can be built with `DESKFLOW_LAB_BUILD=ON`,
+`DESKFLOW_UI_REVIEW_BUILD=ON`, `BUILD_TESTS=OFF`, `BUILD_INSTALLER=OFF`, and
+`UPDATE_TRANSLATIONS=OFF`. Run its registered tests with
+`ctest --test-dir build --output-on-failure`. Each suite gets a new private
+profile; input/core launch gates remain disabled.
+
+The old `FullWindowTests` scaffold referenced the removed `mainContentScroll`
+view and was retired. Current home/navigation behavior is exercised by
+`ConnectionHomeTests`, `LabHomeFlowTests`, `LabFirstSetupFlowTests` and
+`DesktopProductFlowTests`; core stop/retry/late-event behavior is exercised by
+`IpcLifecycleTests`, `ClientAppRecoveryTests`, `LabCoreSessionTests` and
+`LabAutomaticRecoveryTests`. Wide windows use the sidebar; compact windows
+allow content scrolling, and tests bring controls into view before asserting
+keyboard reachability. Test fixtures do not assert that all content is visible
+at once in a small window.

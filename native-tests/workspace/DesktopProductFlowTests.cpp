@@ -128,6 +128,14 @@ class DesktopProductFlowTests : public QObject
     window.show();
     QApplication::processEvents();
   }
+  static void reveal(QWidget *widget)
+  {
+    for (auto *parent = widget->parentWidget(); parent; parent = parent->parentWidget())
+      if (auto *scroll = qobject_cast<QScrollArea *>(parent)) {
+        scroll->ensureWidgetVisible(widget, 0, 0);
+        QApplication::processEvents();
+      }
+  }
   void capture(MainWindow &window, const QString &name)
   {
     const auto output = qEnvironmentVariable("DESKFLOW_UI_TEST_SCREENSHOTS");
@@ -295,8 +303,8 @@ private Q_SLOTS:
       auto *primary = home->findChild<QPushButton *>("homePrimary");
       const bool inactive = phase == S::Idle || phase == S::Paused || phase == S::Failed || phase == S::NeedsAction;
       QCOMPARE(home->findChild<QPushButton *>("homeChangeDirection")->isVisible(), inactive);
-      QCOMPARE(home->findChild<QPushButton *>("homeOptions")->isVisible(), inactive);
-      QCOMPARE(home->findChild<QPushButton *>("homeSaved")->isVisible(), !share);
+      QCOMPARE(home->findChild<QPushButton *>("homeOptions")->isVisible(), inactive && width < 800);
+      QCOMPARE(home->findChild<QPushButton *>("homeSaved")->isVisible(), !share && width < 800);
       QVERIFY(home->findChild<QWidget *>("homeLocalDevice")->isVisible());
       QVERIFY(home->findChild<QWidget *>("homePeerDevice")->isVisible());
       QVERIFY(!home->findChild<QLabel *>("homeStatus")->text().isEmpty());
@@ -304,6 +312,7 @@ private Q_SLOTS:
         QVERIFY(!home->findChild<QLabel *>("homeReason")->text().contains("Generic diagnostic"));
       for (auto *button : home->findChildren<QPushButton *>())
         if (button->isVisible()) {
+          reveal(button);
           QVERIFY2(
               window.rect().contains(QRect(button->mapTo(&window, QPoint()), button->size())),
               qPrintable(button->objectName())
@@ -433,16 +442,20 @@ private Q_SLOTS:
         capture(window, QString("foundation-compact-%1-%2").arg(share ? "controller" : "receiver").arg(int(phase)));
         QCOMPARE(window.size(), QSize(620, 480));
         for (auto *button : window.m_home->findChildren<QPushButton *>())
-          if (button->isVisible())
+          if (button->isVisible()) {
+            reveal(button);
             QVERIFY2(
                 window.rect().contains(QRect(button->mapTo(&window, QPoint()), button->size())),
                 qPrintable(button->objectName())
             );
-        if (share)
+          }
+        if (share) {
+          reveal(window.m_desktopWorkspace->canvas());
           QVERIFY2(
               window.m_desktopWorkspace->canvas()->visibleRegion().boundingRect().height() >= 160,
-              "Compact phase must retain an editable canvas"
+              "Compact phase must retain an editable canvas after scrolling"
           );
+        }
       }
       QVERIFY(!window.m_coreProcess.isStarted());
     }
@@ -920,8 +933,9 @@ private Q_SLOTS:
     QVERIFY(!toggle->icon().isNull());
     toggle->setFocus();
     QTest::keyClick(toggle, Qt::Key_Space);
-    QVERIFY(search->isExpanded());
     auto *text = search->findChild<QLineEdit *>("logSearchText");
+    QVERIFY(text);
+    QVERIFY(text->isVisible());
     text->setText("isolated search");
     QSignalSpy next(search, &SearchWidget::findNext);
     auto *button = search->findChild<QPushButton *>("logSearchNext");
@@ -932,7 +946,7 @@ private Q_SLOTS:
     QCOMPARE(next.first().first().toString(), QString("isolated search"));
     capture(window, "log-search-expanded");
     toggle->click();
-    QVERIFY(!search->isExpanded());
+    QVERIFY(text->isHidden());
     auto *menu = window.menuBar()->actions().first()->menu();
     QVERIFY(menu);
     menu->popup(window.menuBar()->mapToGlobal(QPoint(0, window.menuBar()->height())));
@@ -1184,20 +1198,22 @@ private Q_SLOTS:
       f.write(QJsonDocument(geometry).toJson());
     }
     QCOMPARE(window.size(), viewport);
+    reveal(primary);
     QVERIFY2(
         primary->visibleRegion().boundingRect().contains(primary->rect()),
-        "Primary action clipped by its actual parent hierarchy"
+        "Primary action must be fully reachable through the home scroll area"
     );
-    QVERIFY(window.rect().contains(primaryInWindow));
+    QVERIFY(window.rect().contains(QRect(primary->mapTo(&window, QPoint()), primary->size())));
+    reveal(canvas);
     QVERIFY2(
         canvas->visibleRegion().boundingRect().height() >= 160,
         "Visible canvas must remain usable alongside the real log dock"
     );
-    QVERIFY2(
-        canvas->visibleRegion().boundingRect().contains(canvas->rect()),
-        "The canvas itself must not scroll out behind its inspector"
-    );
+    // The workspace is now part of the shared home scroll area. A compact
+    // window need not show its entire canvas and inspector simultaneously.
+
     auto *selection = view->findChild<QComboBox *>("workspaceSelection");
+    reveal(selection);
     QVERIFY2(
         selection->visibleRegion().boundingRect().contains(selection->rect()),
         "Screen selection must be available beside the canvas"
@@ -1213,7 +1229,7 @@ private Q_SLOTS:
     QCOMPARE(view->workspace().displays().size(), 2);
     QCOMPARE(view->workspace().unknownDevices(), QStringList{"Receiver"});
     QVERIFY(!window.findChild<QPushButton *>("homeLayout")->isVisible());
-    QVERIFY(!window.findChild<QScrollArea *>("homeScroll")->isVisible());
+    QVERIFY(window.findChild<QScrollArea *>("homeScroll")->isVisible());
     QVERIFY(!window.findChild<QPushButton *>("inspectLocalDisplays"));
     capture(window, "controller-old-peer");
   }

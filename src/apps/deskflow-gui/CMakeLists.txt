@@ -93,12 +93,10 @@ if(DESKFLOW_LAB_BUILD)
   target_link_libraries(LabCoreSessionTests PRIVATE gui Qt6::Test)
   add_executable(LabDiscoveryTests ../../unittests/gui/core/DiscoveryIntegrationTests.cpp)
   target_link_libraries(LabDiscoveryTests PRIVATE gui Qt6::Test)
-  add_executable(LabFullWindowTests ../../unittests/gui/core/FullWindowTests.cpp ../res/deskflow.qrc)
-  target_link_libraries(LabFullWindowTests PRIVATE gui Qt6::Test)
   add_executable(LabIpcLifecycleTests ../../unittests/gui/core/IpcLifecycleTests.cpp)
   target_link_libraries(LabIpcLifecycleTests PRIVATE gui app Qt6::Test)
   add_executable(LabClientRecoveryTests ../../unittests/gui/core/ClientAppRecoveryTests.cpp)
-  target_link_libraries(LabClientRecoveryTests PRIVATE app client server platform Qt6::Test Qt6::Widgets)
+  target_link_libraries(LabClientRecoveryTests PRIVATE arch base client io mt net platform server app Qt6::Test Qt6::Widgets)
   add_executable(LabAuthenticationChainTests ../../unittests/gui/core/AuthenticationChainTests.cpp)
   target_link_libraries(LabAuthenticationChainTests PRIVATE gui app client server platform Qt6::Test Qt6::Widgets)
   if(APPLE)
@@ -133,8 +131,39 @@ if(DESKFLOW_LAB_BUILD)
   target_link_libraries(LabAutomaticRecoveryTests PRIVATE gui app client server platform Qt6::Test Qt6::Widgets)
   add_executable(LabRecoveryProbeTests ../../unittests/gui/core/RecoveryProbeTests.cpp)
   target_link_libraries(LabRecoveryProbeTests PRIVATE gui app client server platform Qt6::Test Qt6::Widgets)
-  add_executable(LabStage12Tests ../../unittests/gui/core/Stage12IntegrationTests.cpp)
-  target_link_libraries(LabStage12Tests PRIVATE gui app client server platform Qt6::Test Qt6::Widgets)
+  if(UNIX)
+    add_executable(LabStage12Tests ../../unittests/gui/core/Stage12IntegrationTests.cpp)
+    target_link_libraries(LabStage12Tests PRIVATE gui app client server platform Qt6::Test Qt6::Widgets)
+  endif()
+  # Each offline suite owns a fresh profile outside the source checkout.
+  foreach(offlineTest
+    DesktopProductFlowTests
+    LabStartupEntryTests
+    LabFirstSetupFlowTests
+    LabHomeFlowTests
+    LabCoreSessionTests
+    LabDiscoveryTests
+    LabIpcLifecycleTests
+    LabClientRecoveryTests
+    LabAuthenticationChainTests
+    LabScopedAddressMacTests
+    LabScopedAddressWindowsTests
+    LabProbeProcessTests
+    LabCandidatePolicyTests
+    LabRuntimeProfileTests
+    LabAutomaticRecoveryTests
+    LabWindowsStartupProviderTests
+    LabWindowsStartupDialogTests
+    LabRecoveryProbeTests
+    LabStage12Tests
+  )
+    if(TARGET ${offlineTest})
+      add_test(NAME ${offlineTest}
+        COMMAND "${CMAKE_COMMAND}" "-DTEST_EXECUTABLE=$<TARGET_FILE:${offlineTest}>"
+          -P "${CMAKE_SOURCE_DIR}/native-tests/run-isolated-test.cmake")
+      set_tests_properties(${offlineTest} PROPERTIES TIMEOUT 100)
+    endif()
+  endforeach()
 endif()
 
 install(
