@@ -224,3 +224,5 @@ target_sources(gui PRIVATE
 if(WIN32)
  target_link_libraries(gui PRIVATE taskschd ole32 oleaut32 advapi32)
 endif()
+
+target_sources(gui PRIVATE MainWindowWorkspace.cpp widgets/ConnectionHome.cpp widgets/ConnectionHome.h)
