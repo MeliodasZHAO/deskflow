@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
 # SPDX-License-Identifier: MIT
 
@@ -28,3 +29,9 @@ create_test(
   SOURCE KeySequenceTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/common"
 )
+
+foreach(displayTest DisplayRoutingTests DesktopWorkspaceTests)
+  create_test(NAME ${displayTest} DEPENDS common LIBS Qt6::Gui
+    SOURCE ${displayTest}.cpp WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/common")
+  set_tests_properties(${displayTest} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 30)
+endforeach()
