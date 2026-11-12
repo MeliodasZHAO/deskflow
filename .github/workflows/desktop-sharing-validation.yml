@@ -36,6 +36,11 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: ctest --test-dir build/src/unittests --output-on-failure --parallel 2 --output-junit windows-results.xml
+      - name: Diagnose isolated profile failure
+        if: failure() && steps.configure.outcome == 'success'
+        run: |
+          & .\build\src\unittests\common\CandidatePolicyTests.exe -v1
+          exit $LASTEXITCODE
       - uses: actions/upload-artifact@v7
         if: always()
         with:
