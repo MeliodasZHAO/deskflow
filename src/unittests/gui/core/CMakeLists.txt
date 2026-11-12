@@ -7,3 +7,8 @@ create_test(
   SOURCE NetworkMonitorTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )
+
+find_package(OpenSSL 3.0 REQUIRED COMPONENTS SSL Crypto)
+create_test(NAME ConfiguredTlsProbeTests DEPENDS gui LIBS OpenSSL::SSL OpenSSL::Crypto
+ SOURCE ConfiguredTlsProbeTests.cpp WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui")
+set_tests_properties(ConfiguredTlsProbeTests PROPERTIES TIMEOUT 30)
