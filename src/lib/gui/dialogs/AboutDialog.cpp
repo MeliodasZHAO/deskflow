@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
@@ -13,23 +14,31 @@
 #include "common/Settings.h"
 #include "common/VersionInfo.h"
 
+#include "gui/DialogPresentation.h"
+#include "gui/ExperienceStyle.h"
 #include <QClipboard>
 
 AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent), ui{std::make_unique<Ui::AboutDialog>()}
 {
   ui->setupUi(this);
+  deskflow::gui::applyExperienceStyle(this);
+  layout()->setContentsMargins(20, 20, 20, 16);
+  layout()->setSpacing(16);
 
-  const int px = (fontMetrics().height() * 6);
+  const int px = 72;
   const QSize pixmapSize(px, px);
   ui->lblIcon->setFixedSize(pixmapSize);
 
-  ui->lblIcon->setPixmap(QPixmap(QIcon::fromTheme(kRevFqdnName).pixmap(QSize().scaled(pixmapSize, Qt::KeepAspectRatio)))
-  );
+  ui->lblIcon->setPixmap(QIcon(":/icons/deskflow-light/apps/64/org.deskflow.deskflow.svg").pixmap(pixmapSize));
 
-  ui->btnCopyVersion->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy));
+  ui->btnCopyVersion->setText(tr("Copy version"));
+  ui->btnCopyVersion->setIcon(QIcon());
+  ui->btnCopyVersion->setMaximumWidth(QWIDGETSIZE_MAX);
+  new deskflow::gui::FormButtonMetrics(ui->btnCopyVersion);
+  ui->scrollArea->setFrameShape(QFrame::NoFrame);
   connect(ui->btnCopyVersion, &QPushButton::clicked, this, &AboutDialog::copyVersionText);
 
-  ui->lblVersion->setText(kDisplayVersion);
+  ui->lblVersion->setText(QString(kVersionGitSha).isEmpty() ? kVersion : kDisplayVersion);
   ui->lblDescription->setText(kAppDescription);
   ui->lblCopyright->setText(kCopyright);
 
@@ -49,8 +58,9 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent), ui{std::make_unique
 
 void AboutDialog::copyVersionText() const
 {
-  QString infoString = QStringLiteral("%1: %2 (%3)\nQt: %4\nSystem: %5")
-                           .arg(kAppName, kVersion, kVersionGitSha, qVersion(), QSysInfo::prettyProductName());
+  const auto version = QString(kVersionGitSha).isEmpty() ? QString(kVersion) : QString(kDisplayVersion);
+  QString infoString =
+      QStringLiteral("%1: %2\nQt: %3\nSystem: %4").arg(kAppName, version, qVersion(), QSysInfo::prettyProductName());
   if (Settings::isPortableMode()) {
     infoString.append(QStringLiteral("\nPortable Mode"));
   }
