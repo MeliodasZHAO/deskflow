@@ -21,6 +21,7 @@ class CandidatePolicyTests : public QObject
 {
   Q_OBJECT
 private Q_SLOTS:
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
   void clearedProbeMetadataDoesNotExhaustRecoveryLimit()
   {
     QTemporaryDir dir;
@@ -93,6 +94,20 @@ private Q_SLOTS:
     QVERIFY(QFile::link(identity, trust));
     QVERIFY(!deskflow::lab::CredentialStore::acquireCandidateProfile(settings, identity, fp, &error));
   }
+#else
+  void unsupportedCandidateCredentialDirectoryIsNotCreated()
+  {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto root = QFileInfo(dir.path()).canonicalFilePath() + "/DeskflowCandidate";
+    QVERIFY(QDir().mkpath(root));
+    const auto tls = root + "/tls";
+    QVERIFY(!deskflow::lab::CredentialStore::ensurePrivateCandidateDirectory(tls));
+    QVERIFY(!QFileInfo::exists(tls));
+    QVERIFY(!deskflow::lab::CredentialStore::writeCandidateTrust(tls + "/trusted-servers", "synthetic"));
+    QVERIFY(!QFileInfo::exists(tls));
+  }
+#endif
   void serviceSessionBindsContextAndRejectsUnsafePath()
   {
     deskflow::candidate::ServiceSession s{

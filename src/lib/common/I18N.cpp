@@ -94,7 +94,7 @@ I18N::I18N(QObject *parent) : QObject{parent}
     // Candidate builds are distributed to Chinese users. Keep the first-run
     // experience Chinese even when the host locale is English; an explicit
     // language choice made in Settings remains authoritative.
-#if defined(Q_OS_WIN) || defined(DESKFLOW_CANDIDATE_BUILD)
+#ifdef DESKFLOW_CANDIDATE_BUILD
     const QLocale defaultLocale(QLocale::Chinese, QLocale::China);
 #else
     const QLocale defaultLocale;

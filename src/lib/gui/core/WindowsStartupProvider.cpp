@@ -14,10 +14,12 @@
 #include <QXmlStreamWriter>
 #include <algorithm>
 #ifdef Q_OS_WIN
+// SDDL declarations require the Windows SDK base types and feature macros first.
+#include <windows.h>
+
 #include <sddl.h>
 #include <taskschd.h>
 #include <vector>
-#include <windows.h>
 #include <wrl/client.h>
 #endif
 
