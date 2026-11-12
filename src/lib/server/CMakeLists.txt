@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
 # SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
@@ -40,7 +41,7 @@ add_library(server STATIC
   Server.h
 )
 
-target_link_libraries(server PUBLIC common)
+target_link_libraries(server PUBLIC common PRIVATE Qt6::Network)
 
 if(UNIX)
   target_link_libraries(server PUBLIC app)

@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -22,7 +23,11 @@ ArchDaemonWindows *ArchDaemonWindows::s_daemon = nullptr;
 
 ArchDaemonWindows::ArchDaemonWindows() : m_daemonThreadID(0)
 {
+#ifdef DESKFLOW_CANDIDATE_BUILD
+  m_quitMessage = RegisterWindowMessage(L"DeskflowCandidateDaemonExit");
+#else
   m_quitMessage = RegisterWindowMessage(L"DeskflowDaemonExit");
+#endif
 }
 
 int ArchDaemonWindows::runDaemon(RunFunc runFunc)

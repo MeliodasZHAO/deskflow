@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -7,8 +8,10 @@
 #include "CoreArgParser.h"
 #include "CoreArgs.h"
 
+#include "common/CandidatePolicy.h"
 #include "common/Constants.h"
 #include "common/ExitCodes.h"
+#include "common/PeerAuthentication.h"
 #include "common/Settings.h"
 #include "common/VersionInfo.h"
 #include "deskflow/ProtocolTypes.h"
@@ -33,6 +36,11 @@ CoreArgParser::CoreArgParser(const QStringList &args)
 
 void CoreArgParser::parse()
 {
+  if (!m_parser.errorText().isEmpty())
+    exit(s_exitArgs);
+  if (m_parser.isSet(CoreArgs::peerAuthOption) &&
+      !deskflow::auth::Runtime::activate(deskflow::auth::Context::decode(m_parser.value(CoreArgs::peerAuthOption))))
+    exit(s_exitArgs);
   auto posArgs = m_parser.positionalArguments();
   if (posArgs.isEmpty()) {
     showHelpText();
@@ -51,6 +59,18 @@ void CoreArgParser::parse()
   if (m_parser.isSet(CoreArgs::configOption)) {
     Settings::setSettingsFile(m_parser.value(CoreArgs::configOption));
   }
+#ifdef DESKFLOW_CANDIDATE_BUILD
+  if (!deskflow::candidate::securityProfile(
+          Settings::settingsFile(), Settings::value(Settings::Security::Certificate).toString(),
+          Settings::value(Settings::Security::TlsEnabled).toBool(),
+          Settings::value(Settings::Security::CheckPeers).toBool()
+      ) ||
+      Settings::value(deskflow::candidate::pausedKey).toBool())
+    exit(s_exitArgs);
+#endif
+  if (m_parser.isSet(CoreArgs::peerAuthOption) && (!Settings::value(Settings::Security::TlsEnabled).toBool() ||
+                                                   !Settings::value(Settings::Security::CheckPeers).toBool()))
+    exit(s_exitArgs);
 }
 
 [[noreturn]] void CoreArgParser::showHelpText() const

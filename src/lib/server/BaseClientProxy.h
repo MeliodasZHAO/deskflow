@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,6 +8,7 @@
 
 #pragma once
 
+#include "common/DisplayTopology.h"
 #include "deskflow/IClient.h"
 
 namespace deskflow {
@@ -46,6 +48,22 @@ public:
   /*!
   Return if this proxy is for client or primary.
   */
+  virtual const deskflow::display::Topology *monitorTopology() const
+  {
+    return nullptr;
+  }
+  virtual bool supportsMonitorTopology() const
+  {
+    return false;
+  }
+  virtual QString peerIdentityReference() const
+  {
+    return {};
+  }
+  virtual void updateServerTopology()
+  {
+  }
+
   virtual bool isPrimary() const
   {
     return false;

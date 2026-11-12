@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2025 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -48,6 +49,8 @@ private:
   void saveLogLevel(const QString &logLevel) const;
   void setConfigFile(const QString &configFile);
   void applyWatchdogCommand() const;
+  void applyPeerSession(const QString &encoded);
+  void stopPeerSession(const QString &token);
   void clearWatchdogCommand();
   void clearSettings();
 
@@ -61,5 +64,7 @@ private:
   FileLogOutputter *m_pFileLogOutputter = nullptr;
   deskflow::core::ipc::DaemonIpcServer *m_ipcServer = nullptr;
   QString m_configFile;
+  QString m_peerSession;
+  quint64 m_peerEpoch = 0;
   bool m_foreground = false;
 };

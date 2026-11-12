@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
 # SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
@@ -18,6 +19,10 @@ if(WIN32)
     DaemonApp.cpp
     DaemonApp.h
     ${CMAKE_CURRENT_BINARY_DIR}/${target}.rc)
+
+  if(DESKFLOW_CANDIDATE_BUILD)
+    set_target_properties(${target} PROPERTIES OUTPUT_NAME "deskflow-candidate-daemon")
+  endif()
 
   target_link_libraries(
     ${target}

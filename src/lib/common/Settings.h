@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 - 2026 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2016 - 2025 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -10,6 +11,7 @@
 #include <QSettings>
 
 #include <QDir>
+#include <functional>
 
 #include "common/Constants.h"
 #include "common/NetworkProtocol.h"
@@ -59,6 +61,7 @@ public:
     inline static const auto Display = QStringLiteral("core/display");
     inline static const auto UseHooks = QStringLiteral("core/useHooks");
     inline static const auto Language = QStringLiteral("core/language");
+    inline static const auto LanguageExplicit = QStringLiteral("core/languageExplicit");
     inline static const auto EnableEnterCommand = QStringLiteral("core/enableEnterCommand");
     inline static const auto ComputerEnterCommand = QStringLiteral("core/enterCommand");
     inline static const auto EnableExitCommand = QStringLiteral("core/enableExitCommand");
@@ -86,6 +89,7 @@ public:
     inline static const auto ShownServerFirstStartMessage = QStringLiteral("gui/shownServerFirstStartMessage");
     inline static const auto ShowVersionInTitle = QStringLiteral("gui/showVersionInTitle");
     inline static const auto IgnoreMissingKeyboardLayouts = QStringLiteral("gui/ignoreMissingKeyboardLayouts");
+    inline static const auto RecentServers = QStringLiteral("gui/recentServers");
   };
   struct Log
   {
@@ -110,10 +114,16 @@ public:
     inline static const auto EnableHeartbeat = QStringLiteral("server/enableHeartbeat");
     inline static const auto EnableSwitchDelay = QStringLiteral("server/enableSwitchDelay");
     inline static const auto EnableSwitchDoubleTap = QStringLiteral("server/enableSwitchDoubleTap");
+    inline static const auto DiscoveryEnabled = QStringLiteral("server/discoveryEnabled");
     inline static const auto ExternalConfig = QStringLiteral("server/externalConfig");
     inline static const auto ExternalConfigFile = QStringLiteral("server/externalConfigFile");
     inline static const auto GridHeight = QStringLiteral("server/gridHeight");
     inline static const auto GridWidth = QStringLiteral("server/gridWidth");
+    inline static const auto MonitorLayout = QStringLiteral("server/monitorLayout");
+    inline static const auto WorkspaceDraft = QStringLiteral("server/workspaceDraft");
+    inline static const auto WorkspaceApplied = QStringLiteral("server/workspaceApplied");
+    inline static const auto MonitorTopologies = QStringLiteral("server/monitorTopologies");
+    inline static const auto DesktopLayout = QStringLiteral("server/desktopLayout");
     inline static const auto Heartbeat = QStringLiteral("server/heartbeat");
     inline static const auto Protocol = QStringLiteral("server/protocol");
     inline static const auto RelativeMouseMoves = QStringLiteral("server/relativeMouseMoves");
@@ -210,6 +220,9 @@ public:
   static QSettingsProxy &proxy();
   static NetworkProtocol networkProtocol();
   static void save(bool emitSaving = true);
+  // Commit one configuration edit atomically. State-only keys belong outside
+  // this callback; notifications are sent only after a successful write.
+  static bool saveConfig(const std::function<void()> &update);
   static QStringList validKeys();
   static QStringList validGroups();
   static QString portableSettingsFile();
@@ -256,6 +269,8 @@ private:
   void checkIfSettingsWritableChange();
 
   QSettings *m_settings = nullptr;
+  bool m_configWritePending = false;
+  QStringList m_pendingConfigKeys;
   QSettings *m_stateSettings = nullptr;
   bool m_settingsWritable;
   QFileSystemWatcher *m_settingsWatcher = nullptr;
@@ -274,7 +289,11 @@ private:
   };
 
   inline static const QStringList m_validKeys = {
-      Client::DynamicConnectionRetry
+      QStringLiteral("gui/userPaused")
+    , QStringLiteral("gui/identityBindings")
+    , QStringLiteral("gui/automaticRecovery")
+    , QStringLiteral("gui/runtimeProfile")
+    , Client::DynamicConnectionRetry
     , Client::InvertYScroll
     , Client::InvertXScroll
     , Client::LanguageSync
@@ -296,6 +315,7 @@ private:
     , Core::Display
     , Core::UseHooks
     , Core::Language
+    , Core::LanguageExplicit
     , Daemon::ConfigFile
     , Daemon::Elevate
     , Daemon::LogFile
@@ -316,6 +336,7 @@ private:
     , Gui::ShownServerFirstStartMessage
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
+    , Gui::RecentServers
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize
@@ -327,10 +348,16 @@ private:
     , Server::EnableHeartbeat
     , Server::EnableSwitchDelay
     , Server::EnableSwitchDoubleTap
+    , Server::DiscoveryEnabled
     , Server::ExternalConfig
     , Server::ExternalConfigFile
     , Server::GridHeight
     , Server::GridWidth
+    , Server::MonitorLayout
+    , Server::WorkspaceDraft
+    , Server::WorkspaceApplied
+    , Server::MonitorTopologies
+    , Server::DesktopLayout
     , Server::Heartbeat
     , Server::Protocol
     , Server::RelativeMouseMoves
@@ -362,6 +389,7 @@ private:
     , Server::EnableHeartbeat
     , Server::EnableSwitchDelay
     , Server::EnableSwitchDoubleTap
+    , Server::DiscoveryEnabled
     , Server::ExternalConfig
     , Server::RelativeMouseMoves
     , Server::XdpClipboardRetried
@@ -383,6 +411,7 @@ private:
   // Settings saved in our State file
   inline static const QStringList m_stateKeys = {
       Gui::WindowGeometry
+    , Gui::RecentServers
     , Client::XdpClipboardRetried
     , Client::XdpRestoreToken
     , Server::XdpClipboardRetried

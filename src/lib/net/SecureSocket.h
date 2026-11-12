@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2015 - 2016 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,6 +8,7 @@
 
 #pragma once
 
+#include "common/PeerAuthentication.h"
 #include "net/SecurityLevel.h"
 #include "net/TCPSocket.h"
 
@@ -20,6 +22,7 @@ class ISocketMultiplexerJob;
 class QString;
 
 struct Ssl;
+struct ssl_ctx_st;
 
 //! Secure socket
 /*!
@@ -59,6 +62,7 @@ public:
     m_fatal = b;
   }
   bool isSecureReady() const;
+  QString peerIdentityReference() const;
   void secureConnect();
   void secureAccept();
   int secureRead(void *buffer, int size, int &read);
@@ -67,6 +71,12 @@ public:
   JobResult doWrite() override;
   void initSsl(bool server);
   bool loadCertificate(const QString &filename);
+  static bool loadPreparedIdentity(ssl_ctx_st *context, const QByteArray &material);
+  // Offline-testable decision also used by the live handshake path. It does
+  // not construct a socket, read credentials or add a trusted fingerprint.
+  static deskflow::auth::Report authenticatePeerDigest(
+      deskflow::auth::Report attempt, const QString &digest, bool tls, bool peerChecks, bool databaseTrusted
+  );
 
 private:
   // SSL
@@ -78,7 +88,8 @@ private:
   bool showCertificate() const;
   void checkResult(int n, int &retry);
   void disconnect();
-  bool verifyCertFingerprint(const QString &FingerprintDatabasePath) const;
+  bool verifyCertFingerprint(const QString &FingerprintDatabasePath);
+  void publishAuthentication(deskflow::auth::Outcome outcome, const QString &digest = {});
 
   ISocketMultiplexerJob *serviceConnect(ISocketMultiplexerJob *const socket, bool, bool, bool);
 
@@ -91,11 +102,16 @@ private:
   // from outside SocketMultiplexer thread is close(), so we mostly care about things accessed
   // by it.
   std::mutex ssl_mutex_;
+  mutable std::mutex m_identityMutex;
+  QString m_verifiedPeerIdentity;
 
   std::unique_ptr<Ssl> m_ssl;
   bool m_secureReady = false;
   bool m_fatal = false;
   SecurityLevel m_securityLevel = SecurityLevel::Encrypted;
+  deskflow::auth::Report m_authAttempt;
+  std::atomic_bool m_authCancelled{false};
+  bool m_authTerminal = false;
 
   bool m_writeRetry = false;
   int m_writeRetrySize = 0;

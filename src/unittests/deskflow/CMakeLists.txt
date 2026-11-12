@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
 # SPDX-License-Identifier: MIT
 
@@ -63,3 +64,11 @@ if(BUILD_X11_SUPPORT)
   )
 endif()
 
+
+create_test(
+  NAME DisplayTopologyMessageTests
+  DEPENDS app
+  LIBS arch base io mt net platform ${extra_libs}
+  SOURCE DisplayTopologyMessageTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/deskflow"
+)

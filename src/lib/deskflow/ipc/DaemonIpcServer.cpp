@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025-2026 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -8,6 +9,7 @@
 
 #include "base/Log.h"
 #include "common/Constants.h"
+#include "common/ServiceSession.h"
 
 #include <QLocalSocket>
 
@@ -25,6 +27,22 @@ DaemonIpcServer::DaemonIpcServer(QObject *parent, const QString &logFilename)
 
 void DaemonIpcServer::processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts)
 {
+#ifdef DESKFLOW_CANDIDATE_BUILD
+  if (command == "startPeer") {
+    if (parts.size() == 2 && deskflow::candidate::ServiceSession::decode(parts[1]).valid())
+      Q_EMIT peerSessionRequested(parts[1]);
+    else
+      writeToClientSocket(clientSocket, kErrorMessage);
+    return;
+  }
+  if (command == "stopPeer") {
+    if (parts.size() == 2 && deskflow::auth::identifier(parts[1]))
+      Q_EMIT peerStopRequested(parts[1]);
+    else
+      writeToClientSocket(clientSocket, kErrorMessage);
+    return;
+  }
+#endif
   if (command == QStringLiteral("logLevel")) {
     processLogLevel(clientSocket, parts);
   } else if (command == QStringLiteral("configFile")) {

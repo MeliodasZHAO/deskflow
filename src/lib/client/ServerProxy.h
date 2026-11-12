@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016, 2026 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
@@ -71,11 +72,11 @@ protected:
     return m_stream;
   }
 
+  virtual void sendInfo(const ClientInfo &);
+
 private:
   // if compressing mouse motion then send the last motion now
   void flushCompressedMouse();
-
-  void sendInfo(const ClientInfo &);
 
   void resetKeepAliveAlarm();
   void setKeepAliveRate(double);
