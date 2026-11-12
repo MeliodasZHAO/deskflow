@@ -102,4 +102,5 @@ private:
   size_t m_currentServerIndex = 0;
   size_t m_lastServerAddressIndex = 0;
   uint m_retryCount = 0;
+  uint m_duplicateRetries = 0;
 };
