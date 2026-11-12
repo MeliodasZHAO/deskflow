@@ -155,13 +155,17 @@ void Client::disconnect(const char *msg)
 void Client::refuseConnection(deskflow::core::ConnectionRefusal reason, const char *msg)
 {
   const auto metaEnum = QMetaEnum::fromType<deskflow::core::ConnectionRefusal>();
-  ipcSendToClient("connectionRefused", metaEnum.valueToKey(static_cast<int>(reason)));
+  // Busy may be a previous session awaiting heartbeat expiry. The app reports
+  // it as a final refusal only after the bounded retry window has elapsed.
+  if (reason != deskflow::core::ConnectionRefusal::AlreadyConnected)
+    ipcSendToClient("connectionRefused", metaEnum.valueToKey(static_cast<int>(reason)));
 
   cleanup();
 
   if (msg) {
     auto info = new FailInfo(msg);
     info->m_retry = false; // Protocol/identity/configuration refusal requires user action.
+    info->m_refusalReason = reason;
     Event event(EventTypes::ClientConnectionRefused, getEventTarget(), info, Event::EventFlags::DontFreeData);
     m_events->addEvent(std::move(event));
   }

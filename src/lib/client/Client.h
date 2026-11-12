@@ -15,6 +15,7 @@
 #include "common/Enums.h"
 #include "deskflow/IClipboard.h"
 #include "net/NetworkAddress.h"
+#include <optional>
 
 #include <climits>
 #include <string>
@@ -82,6 +83,7 @@ public:
       // do nothing
     }
     bool m_retry = false;
+    std::optional<deskflow::core::ConnectionRefusal> m_refusalReason;
     QString m_what;
   };
 

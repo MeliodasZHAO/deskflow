@@ -186,6 +186,7 @@ void ClientApp::handleClientConnected()
 {
   cancelClientRestart();
   m_retryCount = 0;
+  m_duplicateRetries = 0;
   LOG_DEBUG("connected to server");
   ipcSendConnectionState(deskflow::core::ConnectionState::Connected);
   // Reset server index on successful connection
@@ -228,6 +229,19 @@ void ClientApp::handleClientFailed(const Event &e)
 void ClientApp::handleClientRefused(const Event &e)
 {
   std::unique_ptr<Client::FailInfo> info(static_cast<Client::FailInfo *>(e.getData()));
+
+  const bool duplicate = info->m_refusalReason == deskflow::core::ConnectionRefusal::AlreadyConnected;
+  // Three four-second retries cover the default nine-second heartbeat expiry.
+  // This never evicts an existing peer, changes identity or relaxes TLS checks.
+  if (duplicate && m_duplicateRetries < 3 && m_retryAllowed && !m_suspended &&
+      deskflow::auth::Runtime::retryAllowed()) {
+    ++m_duplicateRetries;
+    LOG_WARN("previous client session may still be closing; retry %u of 3 in 4 seconds", m_duplicateRetries);
+    scheduleClientRestart(4.0);
+    return;
+  }
+  if (duplicate)
+    ipcSendToClient("connectionRefused", "AlreadyConnected");
 
   if (!info->m_retry) {
     m_retryAllowed = false;
