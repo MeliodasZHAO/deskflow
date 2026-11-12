@@ -285,6 +285,10 @@ add_subdirectory(docs)
 # build translations before source, I18N unit tests fail if they are missing
 add_subdirectory(translations)
 
+if(DESKFLOW_LAB_BUILD)
+  enable_testing()
+endif()
+
 add_subdirectory(src)
 
 install(

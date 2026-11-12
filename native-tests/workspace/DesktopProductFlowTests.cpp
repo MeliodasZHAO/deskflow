@@ -444,8 +444,10 @@ private Q_SLOTS:
         for (auto *button : window.m_home->findChildren<QPushButton *>())
           if (button->isVisible()) {
             reveal(button);
-            QVERIFY2(window.rect().contains(QRect(button->mapTo(&window, QPoint()), button->size())),
-                     qPrintable(button->objectName()));
+            QVERIFY2(
+                window.rect().contains(QRect(button->mapTo(&window, QPoint()), button->size())),
+                qPrintable(button->objectName())
+            );
           }
         if (share) {
           reveal(window.m_desktopWorkspace->canvas());
@@ -1197,8 +1199,10 @@ private Q_SLOTS:
     }
     QCOMPARE(window.size(), viewport);
     reveal(primary);
-    QVERIFY2(primary->visibleRegion().boundingRect().contains(primary->rect()),
-             "Primary action must be fully reachable through the home scroll area");
+    QVERIFY2(
+        primary->visibleRegion().boundingRect().contains(primary->rect()),
+        "Primary action must be fully reachable through the home scroll area"
+    );
     QVERIFY(window.rect().contains(QRect(primary->mapTo(&window, QPoint()), primary->size())));
     reveal(canvas);
     QVERIFY2(
