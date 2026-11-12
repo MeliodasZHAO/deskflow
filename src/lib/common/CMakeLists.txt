@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-License-Identifier: MIT
 
@@ -42,3 +43,20 @@ target_include_directories(common
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/lib>
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/lib>
 )
+
+target_sources(common PRIVATE
+  DesktopWorkspace.cpp
+  DesktopWorkspace.h
+  DisplayTopology.cpp
+  DisplayTopology.h
+  NativeDisplayTopology.cpp
+  WorkspaceApply.h
+  PeerAuthentication.h
+)
+if(APPLE)
+  target_link_libraries(common PRIVATE "-framework CoreGraphics" "-framework ColorSync")
+elseif(WIN32)
+  target_link_libraries(common PRIVATE user32)
+endif()
+
+target_link_libraries(common PRIVATE Qt6::Gui)
