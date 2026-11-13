@@ -25,6 +25,11 @@ CoreIpcClient::CoreIpcClient(QObject *parent)
   deskflow::lab::IsolatedSession::sealStartup();
 }
 
+void CoreIpcClient::sendHealthProbe(const QString &nonce)
+{
+  sendMessage(QStringLiteral("healthProbe=") + nonce);
+}
+
 void CoreIpcClient::sendStop()
 {
   sendMessage(QStringLiteral("stop"));

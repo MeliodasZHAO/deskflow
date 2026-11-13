@@ -46,12 +46,26 @@ private Q_SLOTS:
     client.disconnectFromServer();
     QVERIFY(!client.isConnected());
   }
+  void coreStartupGraceAllowsSocketToAppearAfterFirstFailure()
+  {
+    QTemporaryDir dir(QDir::tempPath() + "/deskflow-lab-ipc-XXXXXX");
+    QVERIFY(dir.isValid());
+    IpcClient client(nullptr, dir.path() + "/socket", "fixture");
+    QSignalSpy failure(&client, &IpcClient::connectionFailed);
+    client.beginConnection();
+    QTest::qWait(150);
+    QLocalServer server;
+    QVERIFY(server.listen(dir.path() + "/socket"));
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), 1500);
+    QCOMPARE(failure.count(), 0);
+    client.disconnectFromServer();
+  }
   void stopCancelsQueuedRetryBeforeServerAppears()
   {
     QTemporaryDir dir(QDir::tempPath() + "/deskflow-lab-ipc-XXXXXX");
     QVERIFY(dir.isValid());
     IpcClient client(nullptr, dir.path() + "/socket", "fixture");
-    client.beginConnection(); // Absent socket schedules a zero-delay retry.
+    client.beginConnection(); // Absent socket schedules a cancellable delayed retry.
     client.disconnectFromServer();
     QLocalServer server;
     QVERIFY(server.listen(dir.path() + "/socket"));

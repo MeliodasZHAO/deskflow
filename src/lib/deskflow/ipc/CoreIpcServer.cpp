@@ -16,6 +16,7 @@
 #include "deskflow/App.h"
 
 #include <QLocalSocket>
+#include <QRegularExpression>
 
 namespace deskflow::core::ipc {
 
@@ -41,7 +42,16 @@ CoreIpcServer &CoreIpcServer::instance()
 
 void CoreIpcServer::processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts)
 {
-  Q_UNUSED(parts)
+  if (command == QStringLiteral("healthProbe")) {
+    static const QRegularExpression valid("\\A[a-f0-9]{32}\\z");
+    if (parts.size() == 2 && valid.match(parts.at(1)).hasMatch()) {
+      auto *events = App::instance().getEvents();
+      events->addEvent(
+          Event(EventTypes::CoreHealthProbe, events->getSystemTarget(), new CoreHealthProbeEvent(parts.at(1)))
+      );
+    }
+    return;
+  }
   if (command == QStringLiteral("applyWorkspace")) {
     if (parts.size() != 2 ||
         Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>() != Settings::CoreMode::Server)

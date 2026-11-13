@@ -13,6 +13,10 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#ifndef Q_OS_WIN
+#include <signal.h>
+#include <sys/wait.h>
+#endif
 
 namespace deskflow::gui {
 class NoSocketPreviousCore final : public ipc::CoreIpcClient
@@ -45,6 +49,106 @@ class CoreProcessSessionTests : public QObject
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
   }
 private Q_SLOTS:
+  void desktopIpcLossClearsConnectedAndSchedulesFreshSession()
+  {
+    ServerConfig config;
+    CoreProcess core(config);
+    auto *client = attach(core);
+    core.m_connectionState = deskflow::core::ConnectionState::Connected;
+    QSignalSpy clients(&core, &CoreProcess::connectedClientsChanged);
+    Q_EMIT client->connectionFailed();
+    QCOMPARE(core.connectionState(), deskflow::core::ConnectionState::Disconnected);
+    QCOMPARE(core.processState(), State::RetryPending);
+    QVERIFY(core.m_retryTimer.isActive());
+    QVERIFY(!core.m_coreIpcClient);
+    QCOMPARE(clients.count(), 1);
+    core.stop(Settings::ProcessMode::Desktop);
+    QVERIFY(!core.m_retryTimer.isActive());
+  }
+  void healthRepliesRequireCurrentNonceAndPauseCancelsDeadline()
+  {
+    ServerConfig config;
+    CoreProcess core(config);
+    auto *client = attach(core);
+    core.m_healthProbe = QString(32, 'a');
+    core.m_healthTimer.start(15000);
+    Q_EMIT client->commandReceived("healthReply", QString(32, 'b'));
+    deliver();
+    QCOMPARE(core.m_healthProbe, QString(32, 'a'));
+    Q_EMIT client->commandReceived("healthReply", QString(32, 'a'));
+    deliver();
+    QVERIFY(core.m_healthProbe.isEmpty());
+    QCOMPARE(core.m_healthTimer.interval(), 5000);
+    core.stop(Settings::ProcessMode::Desktop);
+    QVERIFY(!core.m_healthTimer.isActive());
+    Q_EMIT client->commandReceived("healthReply", QString(32, 'a'));
+    deliver();
+    QVERIFY(!core.m_healthTimer.isActive());
+    QVERIFY(!core.m_retryTimer.isActive());
+  }
+  void unresponsiveOwnedProcessIsRetiredWithoutRepairingTrust()
+  {
+    ServerConfig config;
+    CoreProcess core(config);
+    attach(core);
+    core.m_expectedPeer = QString(64, 'a');
+    core.m_connectionState = deskflow::core::ConnectionState::Connected;
+    core.m_healthProbe = QString(32, 'a');
+    auto *process = new QProcess(&core);
+    core.m_process = process;
+#if defined(Q_OS_WIN)
+    process->start("cmd.exe", {"/c", "ping -n 60 127.0.0.1 >nul"});
+#else
+    process->start("/bin/sleep", {"60"});
+#endif
+    QVERIFY(process->waitForStarted());
+#ifndef Q_OS_WIN
+    const auto childPid = static_cast<pid_t>(process->processId());
+    QCOMPARE(::kill(childPid, SIGSTOP), 0);
+    int stoppedStatus = 0;
+    QCOMPARE(::waitpid(childPid, &stoppedStatus, WUNTRACED), childPid);
+    QVERIFY(WIFSTOPPED(stoppedStatus));
+#endif
+    connect(process, &QProcess::finished, &core, [&core](int code, QProcess::ExitStatus status) {
+      core.onProcessFinished(code, status);
+    });
+    core.probeCore();
+    QCOMPARE(core.connectionState(), deskflow::core::ConnectionState::Disconnected);
+    QVERIFY(process->waitForFinished(3000));
+    QCOMPARE(core.processState(), State::RetryPending);
+    QVERIFY(core.m_retryTimer.isActive());
+    QCOMPARE(core.m_expectedPeer, QString(64, 'a'));
+    QVERIFY(!core.m_peerVerified);
+    core.stop(Settings::ProcessMode::Desktop);
+  }
+  void explicitPauseCanStopSuspendedChildAndNeverRestartsIt()
+  {
+#ifdef Q_OS_WIN
+    QSKIP("SIGSTOP is a Unix fault-injection mechanism");
+#else
+    ServerConfig config;
+    CoreProcess core(config);
+    attach(core);
+    auto *process = new QProcess(&core);
+    core.m_process = process;
+    process->start("/bin/sleep", {"60"});
+    QVERIFY(process->waitForStarted());
+    const auto childPid = static_cast<pid_t>(process->processId());
+    QCOMPARE(::kill(childPid, SIGSTOP), 0);
+    int stoppedStatus = 0;
+    QCOMPARE(::waitpid(childPid, &stoppedStatus, WUNTRACED), childPid);
+    QVERIFY(WIFSTOPPED(stoppedStatus));
+    connect(process, &QProcess::finished, &core, [&core](int code, QProcess::ExitStatus status) {
+      core.onProcessFinished(code, status);
+    });
+    core.stop(Settings::ProcessMode::Desktop);
+    QTRY_COMPARE_WITH_TIMEOUT(process->state(), QProcess::NotRunning, 5000);
+    QCOMPARE(core.processState(), State::Stopped);
+    QVERIFY(!core.connectionRequested());
+    QVERIFY(!core.m_retryTimer.isActive());
+    QVERIFY(!core.m_healthTimer.isActive());
+#endif
+  }
   void serverAddressObserverWorksWithoutDiscoveryAndNeverChoosesAnotherLink()
   {
     ServerConfig config;

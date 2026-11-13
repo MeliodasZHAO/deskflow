@@ -21,6 +21,7 @@ public:
   explicit CoreIpcClient(QObject *parent = nullptr);
 
   virtual void sendStop();
+  virtual void sendHealthProbe(const QString &nonce);
   virtual bool sendWorkspaceApply(const QByteArray &request);
 
 Q_SIGNALS:

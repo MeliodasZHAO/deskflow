@@ -134,6 +134,8 @@ CoreProcess::CoreProcess(const ServerConfig &serverConfig)
   );
   connect(m_daemonIpcClient, &ipc::DaemonIpcClient::logPathReceived, this, &CoreProcess::setupDaemonLogTail);
 
+  m_healthTimer.setSingleShot(true);
+  connect(&m_healthTimer, &QTimer::timeout, this, &CoreProcess::probeCore);
   m_rebindDeadline.setSingleShot(true);
   m_rebindDeadline.setInterval(5000);
   connect(this, &CoreProcess::connectionAttemptStarting, this, [this](bool server) {
@@ -381,6 +383,15 @@ void CoreProcess::stopForegroundProcess()
   }
 
   qInfo("stopping core desktop process");
+  const auto stopGeneration = m_runGeneration;
+  const QPointer<QProcess> ownedProcess = m_process;
+  QTimer::singleShot(3000, this, [this, stopGeneration, ownedProcess] {
+    if (stopGeneration == m_runGeneration && ownedProcess && m_process == ownedProcess &&
+        m_processState == ProcessState::Stopping && ownedProcess->state() != QProcess::NotRunning) {
+      qWarning("core did not exit after terminate; killing owned process");
+      ownedProcess->kill();
+    }
+  });
   if (m_coreIpcClient && m_coreIpcClient->isConnected()) {
     qDebug("sending stop command to core process");
     m_coreIpcClient->sendStop();
@@ -934,6 +945,8 @@ QString CoreProcess::applyWorkspace(const QByteArray &bytes)
 
 void CoreProcess::invalidatePendingEvents()
 {
+  m_healthTimer.stop();
+  m_healthProbe.clear();
   if (m_workspacePending) {
     const auto id = m_workspacePending->id;
     m_workspacePending.reset();
@@ -987,6 +1000,8 @@ deskflow::auth::Context CoreProcess::labBeginAuthentication(const QString &expec
 
 void CoreProcess::bindCoreIpcClient(ipc::CoreIpcClient *client)
 {
+  if (m_process)
+    m_healthTimer.start(15000); // Includes an accepted IPC socket whose hello never arrives.
   const auto generation = m_runGeneration;
   const QPointer<ipc::CoreIpcClient> source = client;
   // Disconnecting does not retract already queued deliveries. A generation
@@ -1001,29 +1016,65 @@ void CoreProcess::bindCoreIpcClient(ipc::CoreIpcClient *client)
       },
       Qt::QueuedConnection
   );
-  connect(client, &ipc::CoreIpcClient::connectionFailed, this, [this, source, generation] {
-    if (source && source == m_coreIpcClient && generation == m_runGeneration && !m_serviceContext.isEmpty() &&
-        m_processState == ProcessState::Started) {
-      m_coreIpcClient = nullptr;
-      source->deleteLater();
-      onProcessFinished(1, QProcess::CrashExit);
+  connect(client, &ipc::CoreIpcClient::connected, this, [this, source, generation] {
+    if (source && source == m_coreIpcClient && generation == m_runGeneration &&
+        m_processState == ProcessState::Started && m_process) {
+      m_healthProbe.clear();
+      m_healthTimer.start(5000);
     }
   });
-  connect(client, &ipc::CoreIpcClient::serverShutdown, this, [this, source] {
-    if (!source)
-      return;
-    if (source == m_coreIpcClient) {
-      m_coreIpcClient = nullptr;
-      if (!m_serviceContext.isEmpty() && m_processState == ProcessState::Started)
-        onProcessFinished(1, QProcess::CrashExit);
-    }
-    source->deleteLater();
-  });
+  auto lost = [this, source, generation] {
+    if (source && source == m_coreIpcClient && generation == m_runGeneration && m_processState == ProcessState::Started)
+      coreCommunicationLost();
+  };
+  connect(client, &ipc::CoreIpcClient::connectionFailed, this, lost);
+  connect(client, &ipc::CoreIpcClient::serverShutdown, this, lost);
+}
+
+void CoreProcess::probeCore()
+{
+  if (!m_startRequested || m_recoveryBlocked || m_processState != ProcessState::Started || !m_process)
+    return;
+  if (!m_healthProbe.isEmpty() || !m_coreIpcClient || !m_coreIpcClient->isConnected()) {
+    qWarning("core did not answer its event-queue health probe; retiring this session");
+    coreCommunicationLost();
+    return;
+  }
+  m_healthProbe = QUuid::createUuid().toString(QUuid::Id128);
+  m_coreIpcClient->sendHealthProbe(m_healthProbe);
+  m_healthTimer.start(15000);
+}
+
+void CoreProcess::coreCommunicationLost()
+{
+  // QProcess::Running only means the PID exists. It includes a suspended or
+  // unresponsive input core, whose cached Connected state must never survive.
+  invalidatePendingEvents();
+  setConnectionState(ConnectionState::Disconnected);
+  Q_EMIT connectedClientsChanged({});
+  if (m_coreIpcClient) {
+    auto *old = m_coreIpcClient;
+    m_coreIpcClient = nullptr;
+    old->disconnectFromServer();
+    old->deleteLater();
+  }
+  if (m_process && m_process->state() != QProcess::NotRunning) {
+    // Kill only our owned child. A suspended process cannot handle SIGTERM.
+    // Its finished signal drives bounded recovery and creates fresh auth state.
+    m_process->kill();
+  } else {
+    onProcessFinished(1, QProcess::CrashExit);
+  }
 }
 
 void CoreProcess::onCoreIpcMessageReceived(const QString &command, const QString &args)
 {
-  if (command == "workspaceApplyResult") {
+  if (command == "healthReply") {
+    if (!m_healthProbe.isEmpty() && args == m_healthProbe && m_startRequested && !m_recoveryBlocked) {
+      m_healthProbe.clear();
+      m_healthTimer.start(5000);
+    }
+  } else if (command == "workspaceApplyResult") {
     if (m_mode != Settings::CoreMode::Server || !m_startRequested || m_recoveryBlocked || !m_workspacePending ||
         !m_workspaceLive)
       return;
