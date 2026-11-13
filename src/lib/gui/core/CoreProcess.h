@@ -163,6 +163,10 @@ private:
   friend class AuthenticationChainTests;
   deskflow::auth::Context prepareAuthentication();
   void bindCoreIpcClient(ipc::CoreIpcClient *client);
+  void coreCommunicationLost();
+  void probeCore();
+  QTimer m_healthTimer;
+  QString m_healthProbe;
   void invalidatePendingEvents();
   void stopInternal(std::optional<ProcessMode>, bool preserveIntent);
   void startForegroundProcess(const QStringList &args);

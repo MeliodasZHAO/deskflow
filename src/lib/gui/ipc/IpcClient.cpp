@@ -107,7 +107,7 @@ void IpcClient::attemptConnection()
         ) << QStringLiteral("%1 ipc client failed to connect: %2").arg(m_typeName, m_socket->errorString());
         m_socket->disconnectFromServer();
         m_state = State::Unconnected;
-        QTimer::singleShot(0, this, [this, generation] {
+        QTimer::singleShot(500, this, [this, generation] {
           if (generation == m_connectionGeneration && m_shouldConnect)
             attemptConnection();
         });
