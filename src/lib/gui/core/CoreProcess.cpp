@@ -35,6 +35,7 @@
 #include <QFile>
 #include <QMetaEnum>
 #include <QMutexLocker>
+#include <QProcessEnvironment>
 #include <QRegularExpression>
 
 namespace deskflow::gui {
@@ -316,6 +317,11 @@ void CoreProcess::startForegroundProcess(const QStringList &args)
             Settings::value(Settings::Security::CheckPeers).toBool()
     );
   }
+#ifdef Q_OS_MACOS
+  auto environment = QProcessEnvironment::systemEnvironment();
+  environment.insert("DESKFLOW_GUI_PARENT_PID", QString::number(QCoreApplication::applicationPid()));
+  m_process->setProcessEnvironment(environment);
+#endif
   m_process->start(m_appPath, args);
 
   if (m_process->waitForStarted()) {
