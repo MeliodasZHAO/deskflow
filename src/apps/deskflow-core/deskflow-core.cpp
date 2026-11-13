@@ -31,6 +31,11 @@
 #include <QSharedMemory>
 #include <QTextStream>
 #include <QThread>
+#ifdef Q_OS_MACOS
+#include "common/MacParentLifetime.h"
+#include <climits>
+#include <thread>
+#endif
 
 void qtMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -111,6 +116,28 @@ int main(int argc, char **argv)
   ArchMiscWindows::setInstanceWin32(GetModuleHandle(nullptr));
 #endif
 
+#ifdef Q_OS_MACOS
+  // A headless input helper must not become a second foreground application.
+  // Qt otherwise promotes plain executables during Cocoa initialization.
+  qputenv("QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM", "1");
+  const auto parentText = qgetenv("DESKFLOW_GUI_PARENT_PID");
+  if (!parentText.isEmpty()) {
+    bool valid = false;
+    const auto parent = parentText.toLongLong(&valid);
+    if (!valid || parent <= 1 || parent > INT_MAX)
+      return s_exitFailed;
+    const int fd = deskflow::mac::parentExitDescriptor(static_cast<pid_t>(parent));
+    if (fd < 0)
+      return s_exitFailed;
+    // This thread does not depend on Qt or the input event queue responding.
+    // A GUI crash must release hooks/sockets even when those queues are stuck.
+    std::thread([fd] {
+      const bool exited = deskflow::mac::waitForParentExit(fd);
+      close(fd);
+      _exit(exited ? s_exitSuccess : s_exitFailed);
+    }).detach();
+  }
+#endif
   QApplication::setApplicationName(QStringLiteral("%1 Core").arg(kAppName));
   QApplication app(argc, argv);
 
