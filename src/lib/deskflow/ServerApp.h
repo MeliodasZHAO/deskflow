@@ -102,6 +102,7 @@ public:
   }
 
 private:
+  bool reloadInternalLayout();
   void handleComputerSwitched() const;
   std::unique_ptr<ISocketFactory> getSocketFactory() const;
   NetworkAddress getAddress(const NetworkAddress &address) const;

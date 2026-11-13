@@ -17,6 +17,9 @@ enum class EventTypes : uint32_t
   */
   Unknown,
 
+  /// Round-trip through the input event queue before reporting core liveness.
+  CoreHealthProbe,
+
   /// Exit has been requested.
   Quit,
 
@@ -156,6 +159,7 @@ enum class EventTypes : uint32_t
   ServerComputerSwitched,
 
   ServerAppReloadConfig,
+  ServerAppReloadLayout,
   ServerAppApplyWorkspace,
   ServerAppForceReconnect,
   ServerAppResetServer,

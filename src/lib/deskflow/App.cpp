@@ -6,6 +6,7 @@
  */
 
 #include "deskflow/App.h"
+#include "deskflow/ipc/CoreIpc.h"
 
 #include "DisplayInvalidException.h"
 #include "arch/Arch.h"
@@ -81,6 +82,11 @@ void App::run(QThread &coreThread)
 
     // install application in to arch
     appUtil().adoptApp(this);
+    m_events->addHandler(EventTypes::CoreHealthProbe, m_events->getSystemTarget(), [](const auto &event) {
+      const auto *probe = dynamic_cast<const CoreHealthProbeEvent *>(event.getDataObject());
+      if (probe)
+        ipcSendToClient(QStringLiteral("healthReply"), probe->nonce);
+    });
 
     // HACK: fail by default (saves us setting result in each catch)
     int result = s_exitFailed;
@@ -105,6 +111,8 @@ void App::run(QThread &coreThread)
     } catch (...) {
       LOG_CRIT("an unknown error occurred\n");
     }
+
+    m_events->removeHandler(EventTypes::CoreHealthProbe, m_events->getSystemTarget());
 
     if (result == s_exitSuccess) {
       LOG_INFO("core stopped successfully");

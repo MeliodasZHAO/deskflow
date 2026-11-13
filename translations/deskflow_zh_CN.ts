@@ -1685,6 +1685,14 @@ Additionally, check you are able to %1 the server config file: %2</source>
             <translation>无法添加电脑</translation>
         </message>
         <message>
+            <source>Layout saved</source>
+            <translation>排列已保存</translation>
+        </message>
+        <message>
+            <source>The new computer was saved. The running core has not confirmed the new layout. Restart sharing when it is convenient to apply the saved layout.</source>
+            <translation>新电脑已保存。运行中的核心尚未确认新排列生效。方便时可以重新开始共享，应用已保存的排列。</translation>
+        </message>
+        <message>
             <source>The configuration could not be saved. The previous computers and layout are preserved.</source>
             <translation>配置保存失败，原有电脑和排列已保留。</translation>
         </message>

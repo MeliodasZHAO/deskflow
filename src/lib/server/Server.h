@@ -158,6 +158,7 @@ public:
   This will disconnect any clients no longer in the configuration.
   */
   bool setConfig(const ServerConfig &);
+  bool applyComputerAdditions(const ServerConfig &layout);
   void monitorTopologyChanged(BaseClientProxy *client);
   QByteArray workspaceSnapshot() const;
   QByteArray applyWorkspace(const QByteArray &request, const QByteArray &persisted, const QByteArray &submittedLayout);

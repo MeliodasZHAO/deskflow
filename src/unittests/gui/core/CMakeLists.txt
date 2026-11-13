@@ -18,6 +18,13 @@ create_test(
 )
 
 create_test(
+  NAME CoreRoleTests
+  DEPENDS gui
+  SOURCE CoreRoleTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)
+
+create_test(
   NAME ClientAppRecoveryTests
   DEPENDS app
   LIBS arch base client io mt net platform server Qt6::Widgets

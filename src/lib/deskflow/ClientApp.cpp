@@ -245,7 +245,8 @@ void ClientApp::handleClientRefused(const Event &e)
 
   if (!info->m_retry) {
     m_retryAllowed = false;
-    m_fatalConnectionRefusal = true;
+    const bool unknownComputer = info->m_refusalReason == deskflow::core::ConnectionRefusal::UnknownClient;
+    m_refusalExitCode = unknownComputer ? s_exitUnknownClient : s_exitConfig;
     cancelClientRestart();
     LOG_ERR("failed to connect to server: %s", qPrintable(info->m_what));
     getEvents()->addEvent(Event(EventTypes::Quit));
@@ -371,8 +372,8 @@ int ClientApp::mainLoop()
   // later.  the timer installed by startClient() will take care of
   // that.
   int exitCode = getEvents()->loop();
-  if (m_fatalConnectionRefusal)
-    exitCode = s_exitConfig;
+  if (m_refusalExitCode != s_exitSuccess)
+    exitCode = m_refusalExitCode;
 
   // close down
   LOG_DEBUG("stopping client");
@@ -420,7 +421,7 @@ void ClientApp::tryNextServer()
 void ClientApp::startNode()
 {
   m_retryAllowed = true;
-  m_fatalConnectionRefusal = false;
+  m_refusalExitCode = s_exitSuccess;
   // start the client.  if this return false then we've failed and
   // we shouldn't retry.
   LOG_VERBOSE("starting client");

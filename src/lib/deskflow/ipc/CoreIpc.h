@@ -15,10 +15,24 @@
 
 void ipcSendToClient(const QString &command, const QString &args = "");
 void ipcSendConnectionState(deskflow::core::ConnectionState state);
+struct CoreHealthProbeEvent final : EventData
+{
+  QString nonce;
+  explicit CoreHealthProbeEvent(QString value) : nonce(std::move(value))
+  {
+  }
+};
 struct WorkspaceApplyEvent final : EventData
 {
   QByteArray request;
   explicit WorkspaceApplyEvent(QByteArray value) : request(std::move(value))
+  {
+  }
+};
+struct ServerLayoutReloadEvent final : EventData
+{
+  QString requestId;
+  explicit ServerLayoutReloadEvent(QString id) : requestId(std::move(id))
   {
   }
 };

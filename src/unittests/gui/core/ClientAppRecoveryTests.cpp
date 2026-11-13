@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 // SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
 #include "../../deskflow/MockEventQueue.h"
+#include "arch/Arch.h"
 #include "base/Event.h"
 #include "base/EventQueueTimer.h"
 #include "base/Log.h"
@@ -10,6 +11,7 @@
 #include "deskflow/ipc/CoreIpcServer.h"
 #include <QCoreApplication>
 #include <QTest>
+#include <functional>
 #include <map>
 class RecordingQueue : public MockEventQueue
 {
@@ -17,6 +19,7 @@ public:
   int created = 0, deleted = 0, quit = 0;
   std::map<void *, EventHandler> handlers;
   std::vector<EventQueueTimer *> timers;
+  std::function<void()> onLoop;
   ~RecordingQueue() override
   {
     for (auto *p : timers)
@@ -45,6 +48,12 @@ public:
   {
     if (e.getType() == EventTypes::Quit)
       ++quit;
+  }
+  int loop() override
+  {
+    if (onLoop)
+      onLoop();
+    return 0;
   }
 };
 class SafeClient : public ClientApp
@@ -122,6 +131,22 @@ private Q_SLOTS:
     app.scheduleClientRestart(1);
     QCOMPARE(q.created, 1);
     app.stopClient();
+  }
+  void unknownComputerRefusalHasSpecificExitCode()
+  {
+    RecordingQueue q;
+    SafeClient app(&q);
+    q.onLoop = [&] {
+      auto *failure = new Client::FailInfo("computer is missing from the server layout");
+      failure->m_retry = false;
+      failure->m_refusalReason = deskflow::core::ConnectionRefusal::UnknownClient;
+      app.handleClientRefused(
+          Event(EventTypes::ClientConnectionRefused, nullptr, failure, Event::EventFlags::DontFreeData)
+      );
+    };
+    QCOMPARE(app.mainLoop(), s_exitUnknownClient);
+    QCOMPARE(q.quit, 1);
+    QCOMPARE(q.created, 0);
   }
   void successfulConnectionCancelsObsoleteRetry()
   {
@@ -214,6 +239,8 @@ private Q_SLOTS:
 int main(int argc, char **argv)
 {
   QCoreApplication application(argc, argv);
+  Arch arch;
+  arch.init();
   Log log;
   deskflow::core::ipc::CoreIpcServer ipc(nullptr); // Constructed only; listen() is never called.
   ClientAppRecoveryTests tests;

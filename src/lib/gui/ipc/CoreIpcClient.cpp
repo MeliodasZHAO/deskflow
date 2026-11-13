@@ -25,6 +25,11 @@ CoreIpcClient::CoreIpcClient(QObject *parent)
   deskflow::lab::IsolatedSession::sealStartup();
 }
 
+void CoreIpcClient::sendHealthProbe(const QString &nonce)
+{
+  sendMessage(QStringLiteral("healthProbe=") + nonce);
+}
+
 void CoreIpcClient::sendStop()
 {
   sendMessage(QStringLiteral("stop"));
@@ -35,6 +40,14 @@ bool CoreIpcClient::sendWorkspaceApply(const QByteArray &request)
   if (!isConnected() || request.size() > 14000 || request.contains('\n'))
     return false;
   sendMessage(QStringLiteral("applyWorkspace=") + QString::fromUtf8(request));
+  return true;
+}
+
+bool CoreIpcClient::sendServerLayoutReload(const QString &requestId)
+{
+  if (!isConnected())
+    return false;
+  sendMessage(QStringLiteral("reloadServerLayout=") + requestId);
   return true;
 }
 

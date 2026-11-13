@@ -60,6 +60,7 @@ public:
   void start(std::optional<ProcessMode> processMode = std::nullopt);
   void stop(std::optional<ProcessMode> processMode = std::nullopt);
   void restart();
+  void reloadServerLayout();
   void cleanup();
   void applyLogLevel();
   void clearSettings();
@@ -113,6 +114,9 @@ public:
   void setMode(Settings::CoreMode mode)
   {
     m_mode = mode;
+    // A client attempt pins its server. Sharing authenticates incoming clients instead.
+    if (mode != Settings::CoreMode::Client)
+      m_expectedPeer.clear();
   }
 
 Q_SIGNALS:
@@ -137,6 +141,7 @@ Q_SIGNALS:
   void
   workspaceSnapshotReceived(const QString &serverDevice, const QByteArray &snapshot, const QString &serverFingerprint);
   void workspaceApplyFinished(const QString &request, const QString &outcome, const QString &reason);
+  void serverLayoutReloadFailed();
   void verifiedPeerNameReceived(const QString &fingerprint, const QString &name);
   void monitorRoutingModeChanged(bool perMonitor);
   void securityLevelChanged(QString securityLevel);
@@ -158,11 +163,16 @@ private Q_SLOTS:
 
 private:
   friend class ::DesktopProductFlowTests;
+  friend class CoreRoleTests;
   friend class CoreProcessSessionTests;
   friend class AutomaticRecoveryTests;
   friend class AuthenticationChainTests;
   deskflow::auth::Context prepareAuthentication();
   void bindCoreIpcClient(ipc::CoreIpcClient *client);
+  void coreCommunicationLost();
+  void probeCore();
+  QTimer m_healthTimer;
+  QString m_healthProbe;
   void invalidatePendingEvents();
   void stopInternal(std::optional<ProcessMode>, bool preserveIntent);
   void startForegroundProcess(const QStringList &args);
@@ -201,6 +211,7 @@ private:
   quint64 m_runGeneration = 0;
   std::optional<deskflow::display::WorkspaceSnapshot> m_workspaceLive;
   std::optional<deskflow::display::WorkspaceApplyRequest> m_workspacePending;
+  QString m_pendingServerLayoutReload;
   deskflow::auth::Gate m_authGate;
   QString m_expectedPeer, m_serviceContext, m_serviceStopToken;
   QString m_authenticatedPeer;
