@@ -3,6 +3,12 @@
 
 if (WIN32)
   create_test(
+    NAME WindowsMouseHookRecoveryTests
+    DEPENDS platform
+    SOURCE WindowsMouseHookRecoveryTests.cpp
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
+  )
+  create_test(
     NAME MSWindowsClipboardTests
     DEPENDS platform
     LIBS base arch

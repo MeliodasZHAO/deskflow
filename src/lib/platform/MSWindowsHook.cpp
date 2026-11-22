@@ -10,6 +10,7 @@
 #include "base/Log.h"
 #include "deskflow/DisplayException.h"
 
+#include <atomic>
 #include <cstring>
 #include <mutex>
 
@@ -24,6 +25,7 @@ static DWORD g_threadID = 0;
 static HHOOK g_getMessage = nullptr;
 static HHOOK g_keyboardLL = nullptr;
 static HHOOK g_mouseLL = nullptr;
+static std::atomic<uint32_t> g_mouseMotionActivity{0};
 static bool g_screenSaver = false;
 static EHookMode g_mode = kHOOK_DISABLE;
 static uint32_t g_zoneSides = 0;
@@ -633,6 +635,9 @@ static LRESULT CALLBACK mouseLLHook(int code, WPARAM wParam, LPARAM lParam)
     if (!g_isPrimary && injected) {
       return CallNextHookEx(g_mouseLL, code, wParam, lParam);
     }
+    if (wParam == WM_MOUSEMOVE) {
+      g_mouseMotionActivity.fetch_add(1, std::memory_order_relaxed);
+    }
 
     int32_t x = static_cast<int32_t>(info->pt.x);
     int32_t y = static_cast<int32_t>(info->pt.y);
@@ -645,6 +650,29 @@ static LRESULT CALLBACK mouseLLHook(int code, WPARAM wParam, LPARAM lParam)
   }
 
   return CallNextHookEx(g_mouseLL, code, wParam, lParam);
+}
+
+uint32_t MSWindowsHook::mouseMotionActivity()
+{
+  return g_mouseMotionActivity.load(std::memory_order_relaxed);
+}
+
+bool MSWindowsHook::refreshMouseHook()
+{
+  if (g_hookThread != GetCurrentThreadId()) {
+    return false;
+  }
+  // Keep the existing handle if Windows refuses the new hook.
+  const auto replacement = SetWindowsHookEx(WH_MOUSE_LL, &mouseLLHook, nullptr, 0);
+  if (!replacement) {
+    LOG_WARN("could not refresh Windows mouse hook: %lu", GetLastError());
+    return false;
+  }
+  if (g_mouseLL) {
+    UnhookWindowsHookEx(g_mouseLL);
+  }
+  g_mouseLL = replacement;
+  return true;
 }
 
 EHookResult MSWindowsHook::install()
