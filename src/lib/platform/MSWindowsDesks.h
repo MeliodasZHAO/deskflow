@@ -12,6 +12,7 @@
 #include "deskflow/OptionTypes.h"
 #include "mt/CondVar.h"
 #include "mt/Mutex.h"
+#include "platform/WindowsMouseHookRecovery.h"
 
 #include <map>
 #include <string>
@@ -216,6 +217,7 @@ private:
   void checkDesk();
   bool isDeskAccessible(const Desk *desk) const;
   void handleCheckDesk();
+  void checkMouseHook();
 
   // communication with desk threads
   void waitForDesk() const;
@@ -260,6 +262,7 @@ private:
 
   // the timer used to check for desktop switching
   EventQueueTimer *m_timer = nullptr;
+  deskflow::platform::WindowsMouseHookRecovery m_mouseHookRecovery;
 
   // computer saver stuff
   DWORD m_threadID;
