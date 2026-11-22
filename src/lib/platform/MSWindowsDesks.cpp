@@ -80,6 +80,8 @@
 #define DESKFLOW_MSG_FAKE_REL_MOVE DESKFLOW_HOOK_LAST_MSG + 11
 // enable; <unused>
 #define DESKFLOW_MSG_FAKE_INPUT DESKFLOW_HOOK_LAST_MSG + 12
+// <unused>; <unused>
+#define DESKFLOW_MSG_REFRESH_MOUSE_HOOK DESKFLOW_HOOK_LAST_MSG + 13
 
 static void send_keyboard_input(WORD wVk, WORD wScan, DWORD dwFlags)
 {
@@ -164,6 +166,7 @@ void MSWindowsDesks::disable()
 
   // destroy desks
   removeDesks();
+  m_mouseHookRecovery.reset();
 
   m_isOnComputer = m_isPrimary;
 }
@@ -780,6 +783,12 @@ void MSWindowsDesks::deskThread(const void *vdesk)
           DESKFLOW_HOOK_FAKE_INPUT_VIRTUAL_KEY, DESKFLOW_HOOK_FAKE_INPUT_SCANCODE, msg.wParam ? 0 : KEYEVENTF_KEYUP
       );
       break;
+
+    case DESKFLOW_MSG_REFRESH_MOUSE_HOOK:
+      if (MSWindowsHook::refreshMouseHook()) {
+        LOG_INFO("refreshed Windows mouse hook after local cursor movement without hook events");
+      }
+      break;
     }
 
     // notify that message was processed
@@ -846,6 +855,7 @@ void MSWindowsDesks::checkDesk()
   // which would have the side effect of forcing the screensaver to
   // stop.
   if (name != m_activeDeskName && !m_screensaver->isActive()) {
+    m_mouseHookRecovery.reset();
     // show cursor on previous desk
     bool wasOnComputer = m_isOnComputer;
     if (!wasOnComputer) {
@@ -902,6 +912,7 @@ void MSWindowsDesks::waitForDesk() const
 void MSWindowsDesks::handleCheckDesk()
 {
   checkDesk();
+  checkMouseHook();
 
   // also check if screen saver is running if on a modern OS and
   // this is the primary computer.
@@ -909,6 +920,35 @@ void MSWindowsDesks::handleCheckDesk()
     BOOL running;
     SystemParametersInfo(SPI_GETSCREENSAVERRUNNING, 0, &running, FALSE);
     PostThreadMessage(m_threadID, DESKFLOW_MSG_SCREEN_SAVER, running, 0);
+  }
+}
+
+void MSWindowsDesks::checkMouseHook()
+{
+  // Only repair capture on the ordinary desktop while the cursor is local.
+  // In particular, avoid touching an application's cursor confinement.
+  if (!m_isPrimary || !m_useHooks || !m_isOnComputer || !m_activeDesk || !m_activeDesk->m_window ||
+      !m_activeDesk->m_lowLevel || m_activeDeskName != L"Default" || m_screensaver->isActive()) {
+    m_mouseHookRecovery.reset();
+    return;
+  }
+
+  const auto foreground = ::GetForegroundWindow();
+  CURSORINFO cursor{};
+  cursor.cbSize = sizeof(cursor);
+  RECT clip{};
+  if (!foreground || foreground == m_activeDesk->m_window || !GetCursorInfo(&cursor) ||
+      !(cursor.flags & CURSOR_SHOWING) || !GetClipCursor(&clip) || clip.left > m_x || clip.top > m_y ||
+      clip.right < m_x + m_w || clip.bottom < m_y + m_h) {
+    m_mouseHookRecovery.reset();
+    return;
+  }
+
+  if (m_mouseHookRecovery.observe(
+          reinterpret_cast<std::uintptr_t>(foreground), MSWindowsHook::mouseMotionActivity(), cursor.ptScreenPos.x,
+          cursor.ptScreenPos.y
+      )) {
+    sendMessage(DESKFLOW_MSG_REFRESH_MOUSE_HOOK, 0, 0);
   }
 }
 

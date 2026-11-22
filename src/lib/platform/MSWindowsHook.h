@@ -69,6 +69,9 @@ public:
 
   static EHookResult install();
 
+  static uint32_t mouseMotionActivity();
+  static bool refreshMouseHook();
+
   static int uninstall();
 
   static int installScreenSaver();
