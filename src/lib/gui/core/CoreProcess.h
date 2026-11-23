@@ -113,6 +113,9 @@ public:
   void setMode(Settings::CoreMode mode)
   {
     m_mode = mode;
+    // A client attempt pins its server. Sharing authenticates incoming clients instead.
+    if (mode != Settings::CoreMode::Client)
+      m_expectedPeer.clear();
   }
 
 Q_SIGNALS:
