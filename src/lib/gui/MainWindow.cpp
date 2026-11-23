@@ -1554,7 +1554,9 @@ void MainWindow::openSettingsPage(int page)
 #endif
   auto dialog = SettingsDialog(this, m_serverConfig);
   bool connectionSetup = false;
+  bool overviewRequested = false;
   connect(&dialog, &SettingsDialog::requestConnectionSetup, this, [&connectionSetup] { connectionSetup = true; });
+  connect(&dialog, &SettingsDialog::requestOverview, this, [&overviewRequested] { overviewRequested = true; });
   connect(&dialog, &SettingsDialog::requestStartupQuit, this, [this] { close(); });
   if (auto *tabs = dialog.findChild<QTabWidget *>("tabWidget"))
     tabs->setCurrentIndex(page);
@@ -1577,8 +1579,13 @@ void MainWindow::openSettingsPage(int page)
     showConnectionOptions();
     m_secondaryReturnToSettings = true;
     updateSecondaryPage();
-  } else
+  } else if (overviewRequested) {
+    m_homePages->setCurrentWidget(m_home);
+    resizeToContent();
+    m_home->findChild<QPushButton *>("homePrimary")->setFocus();
+  } else {
     m_home->findChild<QPushButton *>("homeSettings")->setFocus();
+  }
 }
 
 void MainWindow::resetCore()

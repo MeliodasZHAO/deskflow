@@ -2631,6 +2631,30 @@ Enabling this setting will disable the server config GUI.</source>
             <translation>TLS 证书重新生成成功。</translation>
         </message>
         <message>
+            <source>On Overview, click “Start sharing”. Then connect from the receiving computer.</source>
+            <translation>回到概览后，点「开始共享」，再从被控电脑连接。</translation>
+        </message>
+        <message>
+            <source>On Overview, choose the computer that provides the keyboard and mouse, or click “Enter address”. Then click the connection button.</source>
+            <translation>回到概览后，选择提供键鼠的电脑，也可以点「输入地址」。选好后，点连接按钮。</translation>
+        </message>
+        <message>
+            <source>Return to Overview and choose which computer provides the keyboard and mouse.</source>
+            <translation>返回概览，选择由哪台电脑提供键盘和鼠标。</translation>
+        </message>
+        <message>
+            <source>Save or close Settings to return to Overview.</source>
+            <translation>保存或关闭设置，返回概览。</translation>
+        </message>
+        <message>
+            <source>Back to Overview</source>
+            <translation>返回概览</translation>
+        </message>
+        <message>
+            <source>Stay in Settings</source>
+            <translation>留在设置</translation>
+        </message>
+        <message>
             <source>Select a TLS certificate to use...</source>
             <translation>选择要使用的 TLS 证书...</translation>
         </message>

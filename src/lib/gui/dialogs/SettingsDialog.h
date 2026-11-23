@@ -42,6 +42,7 @@ Q_SIGNALS:
   void requestRemoveAllSettings();
   void requestStartupQuit();
   void requestConnectionSetup();
+  void requestOverview();
 
 protected:
   void changeEvent(QEvent *e) override;

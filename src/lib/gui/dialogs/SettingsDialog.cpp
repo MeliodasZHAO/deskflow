@@ -437,14 +437,49 @@ void SettingsDialog::regenCertificates()
 #ifdef DESKFLOW_UI_REVIEW_BUILD
   return;
 #endif
+  const auto certificate = Settings::value(Settings::Security::Certificate).toString();
+  const bool firstIdentity = !QFileInfo::exists(certificate);
   // Selecting a length is a draft edit; only the explicit generation action
   // needs to publish it before the form is saved.
   updateRequestedKeySize();
-  if (TlsUtility::generateCertificate()) {
+  if (!TlsUtility::generateCertificate())
+    return;
+
+  updateKeyLengthOnFile(certificate);
+  updateTlsControls();
+  if (!firstIdentity) {
     QMessageBox::information(this, tr("TLS Certificate Regenerated"), tr("TLS certificate regenerated successfully."));
-    const auto certificate = Settings::value(Settings::Security::Certificate).toString();
-    updateKeyLengthOnFile(certificate);
-    updateTlsControls();
+    return;
+  }
+  if (!TlsUtility::isCertValid(certificate)) {
+    QMessageBox::warning(this, tr("Identity needs attention"), m_identityStatus->text());
+    return;
+  }
+
+  const auto mode = Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>();
+  QString nextStep;
+  if (mode == Settings::CoreMode::Server)
+    nextStep = tr("On Overview, click “Start sharing”. Then connect from the receiving computer.");
+  else if (mode == Settings::CoreMode::Client)
+    nextStep = tr("On Overview, choose the computer that provides the keyboard and mouse, or click “Enter address”. "
+                  "Then click the connection button.");
+  else
+    nextStep = tr("Return to Overview and choose which computer provides the keyboard and mouse.");
+
+  if (isModified()) {
+    QMessageBox::information(
+        this, tr("Identity is ready"), tr("Save or close Settings to return to Overview.") + "\n\n" + nextStep
+    );
+    return;
+  }
+  QMessageBox done(QMessageBox::Information, tr("Identity is ready"), nextStep, QMessageBox::NoButton, this);
+  auto *overview = done.addButton(tr("Back to Overview"), QMessageBox::AcceptRole);
+  done.addButton(tr("Stay in Settings"), QMessageBox::RejectRole);
+  done.setDefaultButton(overview);
+  done.exec();
+  if (done.clickedButton() == overview) {
+    Q_EMIT requestOverview();
+    reject();
   }
 }
 
