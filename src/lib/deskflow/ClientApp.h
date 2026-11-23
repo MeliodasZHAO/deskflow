@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "common/ExitCodes.h"
 #include "deskflow/App.h"
 #include "net/NetworkAddress.h"
 
@@ -93,7 +94,7 @@ private:
 
   bool m_suspended = false;
   bool m_retryAllowed = true;
-  bool m_fatalConnectionRefusal = false;
+  int m_refusalExitCode = s_exitSuccess;
   quint64 m_retryGeneration = 0;
   EventQueueTimer *m_restartTimer = nullptr;
   Client *m_client = nullptr;

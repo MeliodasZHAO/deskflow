@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: (C) 2026 Deskflow Enhanced contributors
 // SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
+#include "common/ExitCodes.h"
 #include "common/IsolatedSession.h"
 #include "gui/core/CoreProcess.h"
 #include <QDir>
@@ -7,20 +8,22 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUuid>
 
+namespace deskflow::gui {
 class CoreRoleTests : public QObject
 {
   Q_OBJECT
+  QTemporaryDir m_profile;
 
 private Q_SLOTS:
-  void changingToServerClearsTheClientPin()
+  void initTestCase()
   {
-    QTemporaryDir profile;
-    QVERIFY(profile.isValid());
-    const auto parent = QFileInfo(profile.path()).canonicalFilePath();
+    QVERIFY(m_profile.isValid());
+    const auto parent = QFileInfo(m_profile.path()).canonicalFilePath();
     const auto id = QUuid::createUuid().toString(QUuid::Id128);
     const auto root = parent + '/' + id;
     for (const auto *directory : {"config/DeskflowLab/tls", "runtime", "state", "logs"})
@@ -36,8 +39,12 @@ private Q_SLOTS:
     QCOMPARE(session.write(contents), contents.size());
     session.close();
     QVERIFY(deskflow::lab::IsolatedSession::activate(root, parent));
+  }
+
+  void changingToServerClearsTheClientPin()
+  {
     ServerConfig config;
-    deskflow::gui::CoreProcess core(config);
+    CoreProcess core(config);
     const QString savedFingerprint(64, 'a');
 
     core.setMode(Settings::CoreMode::Client);
@@ -52,7 +59,46 @@ private Q_SLOTS:
     QVERIFY(core.setExpectedPeerFingerprint(savedFingerprint));
     QCOMPARE(core.expectedPeerFingerprint(), savedFingerprint);
   }
-};
 
-QTEST_GUILESS_MAIN(CoreRoleTests)
+  void retryAfterLayoutRefusal_data()
+  {
+    QTest::addColumn<bool>("ipcReady");
+    QTest::newRow("reported over IPC") << true;
+    QTest::newRow("exited before IPC was ready") << false;
+  }
+
+  void retryAfterLayoutRefusal()
+  {
+    QFETCH(bool, ipcReady);
+    ServerConfig config;
+    CoreProcess core(config);
+    const QString savedFingerprint(64, 'a');
+    core.setMode(Settings::CoreMode::Client);
+    QVERIFY(core.setExpectedPeerFingerprint(savedFingerprint));
+    core.m_startRequested = true;
+    core.setProcessState(deskflow::core::ProcessState::Started);
+    QVERIFY(!core.setExpectedPeerFingerprint(savedFingerprint));
+
+    QSignalSpy refusal(&core, &CoreProcess::connectionRefused);
+    QSignalSpy genericError(&core, &CoreProcess::error);
+    if (ipcReady)
+      core.onCoreIpcMessageReceived("connectionRefused", "UnknownClient");
+    core.onProcessFinished(s_exitUnknownClient, QProcess::NormalExit);
+
+    QCOMPARE(refusal.count(), 1);
+    QCOMPARE(
+        refusal.at(0).at(0).value<deskflow::core::ConnectionRefusal>(), deskflow::core::ConnectionRefusal::UnknownClient
+    );
+    QCOMPARE(genericError.count(), 0);
+    QCOMPARE(core.processState(), deskflow::core::ProcessState::Stopped);
+    QVERIFY(!core.m_retryTimer.isActive());
+    QVERIFY(core.m_recoveryBlocked);
+    QVERIFY(!core.recoveryPermitted());
+    QCOMPARE(core.expectedPeerFingerprint(), savedFingerprint);
+    QVERIFY(core.setExpectedPeerFingerprint(savedFingerprint));
+  }
+};
+} // namespace deskflow::gui
+
+QTEST_GUILESS_MAIN(deskflow::gui::CoreRoleTests)
 #include "CoreRoleTests.moc"

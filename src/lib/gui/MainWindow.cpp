@@ -741,7 +741,8 @@ void MainWindow::refreshConnectionHome()
   using A = ConnectionDiagnostics::Attention;
   const auto attention = m_connectionDiagnostics->attention();
   if (state.stage == S::NeedsAction && (attention == A::StartFailed || attention == A::Address ||
-                                        attention == A::Daemon || attention == A::DuplicateName)) {
+                                        attention == A::Daemon || attention == A::DuplicateName ||
+                                        attention == A::UnknownClient)) {
     state.stage = S::Failed;
     state.canRetry = attention != A::Daemon && state.identityReady && state.canStart &&
                      m_coreProcess.processState() == ProcessState::Stopped;

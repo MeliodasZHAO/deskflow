@@ -161,6 +161,7 @@ private Q_SLOTS:
 
 private:
   friend class ::DesktopProductFlowTests;
+  friend class CoreRoleTests;
   friend class CoreProcessSessionTests;
   friend class AutomaticRecoveryTests;
   friend class AuthenticationChainTests;

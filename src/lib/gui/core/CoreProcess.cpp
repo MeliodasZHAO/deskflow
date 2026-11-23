@@ -265,6 +265,13 @@ void CoreProcess::onProcessFinished(int exitCode, QProcess::ExitStatus status)
     checkExistingProcess();
     return;
   }
+  if (m_mode == Settings::CoreMode::Client && exitCode == s_exitUnknownClient && status == QProcess::NormalExit) {
+    // The server can refuse a new computer before the GUI has connected to IPC.
+    m_recoveryBlocked = true;
+    setProcessState(Stopped);
+    Q_EMIT connectionRefused(deskflow::core::ConnectionRefusal::UnknownClient);
+    return;
+  }
   const bool normalRestart = exitCode == s_exitSuccess && status == QProcess::NormalExit;
   const bool crashRestart = status == QProcess::CrashExit && m_crashRetries < 3;
   if (normalRestart || crashRestart) {
@@ -970,7 +977,7 @@ void CoreProcess::invalidatePendingEvents()
 
 bool CoreProcess::setExpectedPeerFingerprint(const QString &value)
 {
-  if (!recoveryQuiescent() || (m_startRequested && !m_addressRecoveryHold))
+  if (!recoveryQuiescent() || (m_startRequested && !m_addressRecoveryHold && !m_recoveryBlocked))
     return false;
   const auto fp = deskflow::auth::fingerprint(value);
   if (!value.isEmpty() && fp.isEmpty())
