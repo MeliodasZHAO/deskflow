@@ -1558,6 +1558,10 @@ void MainWindow::openSettingsPage(int page)
   connect(&dialog, &SettingsDialog::requestConnectionSetup, this, [&connectionSetup] { connectionSetup = true; });
   connect(&dialog, &SettingsDialog::requestOverview, this, [&overviewRequested] { overviewRequested = true; });
   connect(&dialog, &SettingsDialog::requestStartupQuit, this, [this] { close(); });
+  // The certificate bytes changed even when its path and key length did not.
+  connect(&dialog, &SettingsDialog::identityGenerated, this, [this] {
+    settingsChanged(Settings::Security::Certificate);
+  });
   if (auto *tabs = dialog.findChild<QTabWidget *>("tabWidget"))
     tabs->setCurrentIndex(page);
 

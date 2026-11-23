@@ -447,12 +447,13 @@ void SettingsDialog::regenCertificates()
 
   updateKeyLengthOnFile(certificate);
   updateTlsControls();
-  if (!firstIdentity) {
-    QMessageBox::information(this, tr("TLS Certificate Regenerated"), tr("TLS certificate regenerated successfully."));
-    return;
-  }
   if (!TlsUtility::isCertValid(certificate)) {
     QMessageBox::warning(this, tr("Identity needs attention"), m_identityStatus->text());
+    return;
+  }
+  Q_EMIT identityGenerated();
+  if (!firstIdentity) {
+    QMessageBox::information(this, tr("TLS Certificate Regenerated"), tr("TLS certificate regenerated successfully."));
     return;
   }
 
@@ -461,8 +462,9 @@ void SettingsDialog::regenCertificates()
   if (mode == Settings::CoreMode::Server)
     nextStep = tr("On Overview, click “Start sharing”. Then connect from the receiving computer.");
   else if (mode == Settings::CoreMode::Client)
-    nextStep = tr("On Overview, choose the computer that provides the keyboard and mouse, or click “Enter address”. "
-                  "Then click the connection button.");
+    nextStep =
+        tr("On Overview, choose the computer that provides the keyboard and mouse, or click “Enter address”. "
+           "Then click the connection button.");
   else
     nextStep = tr("Return to Overview and choose which computer provides the keyboard and mouse.");
 
