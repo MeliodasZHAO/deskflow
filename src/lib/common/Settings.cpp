@@ -708,11 +708,15 @@ QVariant Settings::computerDefaults(const QString &key)
 
 QStringList Settings::knownComputers()
 {
-  const QStringList knownGroups = instance()->m_settings->childGroups();
+  return knownComputers(*instance()->m_settings);
+}
+
+QStringList Settings::knownComputers(const QSettings &settings)
+{
   QStringList computers;
-  for (const auto &group : knownGroups) {
+  for (const auto &group : settings.childGroups()) {
     if (group.startsWith("computer_")) {
-      computers.append(Settings::value(QStringLiteral("%1/name").arg(group)).toString());
+      computers.append(settings.value(QStringLiteral("%1/name").arg(group)).toString());
     }
   }
   return computers;

@@ -229,6 +229,7 @@ public:
   static void removeUnknownComputers(const QStringList &knownComputers);
   static QVariant computerDefaults(const QString &key);
   static QStringList knownComputers();
+  static QStringList knownComputers(const QSettings &settings);
 
 Q_SIGNALS:
   void settingsChanged(const QString key);

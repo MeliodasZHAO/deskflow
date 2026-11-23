@@ -258,6 +258,16 @@ bool Server::setConfig(const ServerConfig &config)
   return true;
 }
 
+bool Server::applyComputerAdditions(const ServerConfig &layout)
+{
+  if (!m_config->applyComputerAdditions(layout))
+    return false;
+
+  ++m_workspaceGeneration;
+  refreshMonitorRouting();
+  return true;
+}
+
 void Server::adoptClient(BaseClientProxy *client)
 {
   assert(client != nullptr);

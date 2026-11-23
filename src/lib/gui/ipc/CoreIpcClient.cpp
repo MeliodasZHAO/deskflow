@@ -43,6 +43,14 @@ bool CoreIpcClient::sendWorkspaceApply(const QByteArray &request)
   return true;
 }
 
+bool CoreIpcClient::sendServerLayoutReload(const QString &requestId)
+{
+  if (!isConnected())
+    return false;
+  sendMessage(QStringLiteral("reloadServerLayout=") + requestId);
+  return true;
+}
+
 void CoreIpcClient::processCommand(const QString &command, const QStringList &parts)
 {
   const auto args = parts.size() >= 2 ? parts.at(1) : QString();

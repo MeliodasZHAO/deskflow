@@ -97,6 +97,28 @@ private Q_SLOTS:
     QCOMPARE(core.expectedPeerFingerprint(), savedFingerprint);
     QVERIFY(core.setExpectedPeerFingerprint(savedFingerprint));
   }
+
+  void layoutReloadAcknowledgementMustMatchThePendingRequest()
+  {
+    ServerConfig config;
+    CoreProcess core(config);
+    core.setMode(Settings::CoreMode::Server);
+    const QString request(32, 'a');
+    core.m_pendingServerLayoutReload = request;
+    QSignalSpy failed(&core, &CoreProcess::serverLayoutReloadFailed);
+
+    core.onCoreIpcMessageReceived("serverLayoutReloadResult", QString(32, 'b') + ":rejected");
+    QCOMPARE(failed.count(), 0);
+    QCOMPARE(core.m_pendingServerLayoutReload, request);
+    core.onCoreIpcMessageReceived("serverLayoutReloadResult", request + ":applied");
+    QVERIFY(core.m_pendingServerLayoutReload.isEmpty());
+    QCOMPARE(failed.count(), 0);
+
+    core.m_pendingServerLayoutReload = request;
+    core.onCoreIpcMessageReceived("serverLayoutReloadResult", request + ":rejected");
+    QVERIFY(core.m_pendingServerLayoutReload.isEmpty());
+    QCOMPARE(failed.count(), 1);
+  }
 };
 } // namespace deskflow::gui
 

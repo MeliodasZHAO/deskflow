@@ -30,6 +30,58 @@ public:
 
 using namespace deskflow::server;
 
+void ServerConfigTests::addThirdComputerPreservesExistingOptionsAndAliases()
+{
+  Config running(nullptr);
+  QVERIFY(running.addComputer("Controller"));
+  QVERIFY(running.addComputer("First"));
+  QVERIFY(running.addAlias("First", "first-alias"));
+  QVERIFY(running.addOption("First", kOptionClipboardSharing, 0));
+  const InputFilter::Rule hotkey(new OnlySystemFilter());
+  running.getInputFilter()->addFilterRule(hotkey);
+
+  Config saved(nullptr);
+  QVERIFY(saved.addComputer("Controller"));
+  QVERIFY(saved.addComputer("First"));
+  QVERIFY(saved.addComputer("Second"));
+  QVERIFY(saved.connect("Controller", Direction::Left, 0.0f, 1.0f, "First", 0.0f, 1.0f));
+  QVERIFY(saved.connect("Controller", Direction::Right, 0.0f, 1.0f, "Second", 0.0f, 1.0f));
+
+  QVERIFY(running.applyComputerAdditions(saved));
+  QCOMPARE(running.getCanonicalName("first-alias"), std::string("First"));
+  QCOMPARE(running.getOptions("First")->at(kOptionClipboardSharing), 0);
+  QCOMPARE(running.getInputFilter()->getRule(0).format(), hotkey.format());
+  QCOMPARE(running.getNeighbor("Controller", Direction::Left, 0.5f, nullptr), std::string("First"));
+  QCOMPARE(running.getNeighbor("Controller", Direction::Right, 0.5f, nullptr), std::string("Second"));
+  QVERIFY(running.applyComputerAdditions(saved)); // A repeated reload is harmless.
+}
+
+void ServerConfigTests::rejectLayoutThatRemovesOrRenamesAnExistingComputer()
+{
+  Config running(nullptr);
+  QVERIFY(running.addComputer("Controller"));
+  QVERIFY(running.addComputer("First"));
+  QVERIFY(running.addAlias("First", "first-alias"));
+  const auto original = running;
+
+  Config saved(nullptr);
+  QVERIFY(saved.addComputer("Controller"));
+  QVERIFY(saved.addComputer("Second"));
+  QVERIFY(!running.applyComputerAdditions(saved));
+  QVERIFY(running == original);
+
+  QVERIFY(saved.addComputer("FIRST"));
+  QVERIFY(!running.applyComputerAdditions(saved));
+  QVERIFY(running == original);
+
+  Config collision(nullptr);
+  QVERIFY(collision.addComputer("Controller"));
+  QVERIFY(collision.addComputer("First"));
+  QVERIFY(collision.addComputer("first-alias"));
+  QVERIFY(!running.applyComputerAdditions(collision));
+  QVERIFY(running == original);
+}
+
 void ServerConfigTests::equalityCheck()
 {
   Config a(nullptr);

@@ -15,6 +15,7 @@
 #include "net/NetworkAddress.h"
 #include "server/InputFilter.h"
 
+#include <QStringList>
 #include <iosfwd>
 #include <map>
 #include <set>
@@ -205,6 +206,9 @@ public:
   */
   bool addComputer(const std::string &name);
 
+  // Update screen links while retaining all existing canonical names, aliases and input options.
+  bool applyComputerAdditions(const Config &layout);
+
   //! Add alias
   /*!
   Adds an alias for a computer name.  An alias can be used
@@ -367,6 +371,7 @@ public:
   and context is unchanged.
   */
   void read(ConfigReadContext &context);
+  void read(ConfigReadContext &context, const QStringList &computers);
 
   //! Read configuration
   /*!

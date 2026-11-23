@@ -42,6 +42,17 @@ CoreIpcServer &CoreIpcServer::instance()
 
 void CoreIpcServer::processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts)
 {
+  if (command == QStringLiteral("reloadServerLayout")) {
+    static const QRegularExpression valid("\\A[a-f0-9]{32}\\z");
+    if (parts.size() == 2 && valid.match(parts.at(1)).hasMatch() &&
+        Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>() == Settings::CoreMode::Server) {
+      auto *events = App::instance().getEvents();
+      events->addEvent(
+          Event(EventTypes::ServerAppReloadLayout, events->getSystemTarget(), new ServerLayoutReloadEvent(parts.at(1)))
+      );
+    }
+    return;
+  }
   if (command == QStringLiteral("healthProbe")) {
     static const QRegularExpression valid("\\A[a-f0-9]{32}\\z");
     if (parts.size() == 2 && valid.match(parts.at(1)).hasMatch()) {

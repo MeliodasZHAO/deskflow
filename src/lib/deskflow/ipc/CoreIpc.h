@@ -29,3 +29,10 @@ struct WorkspaceApplyEvent final : EventData
   {
   }
 };
+struct ServerLayoutReloadEvent final : EventData
+{
+  QString requestId;
+  explicit ServerLayoutReloadEvent(QString id) : requestId(std::move(id))
+  {
+  }
+};

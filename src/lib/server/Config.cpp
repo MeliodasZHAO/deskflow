@@ -444,8 +444,12 @@ bool Config::operator==(const Config &x) const
 
 void Config::read(ConfigReadContext &context)
 {
+  read(context, Settings::knownComputers());
+}
+
+void Config::read(ConfigReadContext &context, const QStringList &computers)
+{
   Config tmp(m_events);
-  const auto computers = Settings::knownComputers();
   for (const auto &computer : computers) {
     if (computer.isEmpty())
       continue;
@@ -464,6 +468,29 @@ void Config::read(ConfigReadContext &context)
     tmp.readSection(context);
   }
   *this = tmp;
+}
+
+bool Config::applyComputerAdditions(const Config &layout)
+{
+  auto updated = layout.m_map;
+  for (const auto &[name, cell] : m_map) {
+    const auto current = updated.find(name);
+    // Connected proxies are indexed by the current canonical spelling.
+    if (current == updated.end() || current->first != name)
+      return false;
+    current->second.m_options = cell.m_options;
+  }
+
+  auto names = m_nameToCanonicalName;
+  for (const auto &entry : updated) {
+    const auto &name = entry.first;
+    if (!m_map.contains(name) && !names.try_emplace(name, name).second)
+      return false;
+  }
+
+  m_map = std::move(updated);
+  m_nameToCanonicalName = std::move(names);
+  return true;
 }
 
 const char *Config::dirName(Direction dir)

@@ -159,6 +159,7 @@ enum class EventTypes : uint32_t
   ServerComputerSwitched,
 
   ServerAppReloadConfig,
+  ServerAppReloadLayout,
   ServerAppApplyWorkspace,
   ServerAppForceReconnect,
   ServerAppResetServer,

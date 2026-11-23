@@ -1177,6 +1177,13 @@ void MainWindow::connectSlots()
   connect(&m_coreProcess, &CoreProcess::daemonIpcClientConnectionFailed, this, [this] {
     m_connectionDiagnostics->requireAttention(ConnectionDiagnostics::Attention::Daemon);
   });
+  connect(&m_coreProcess, &CoreProcess::serverLayoutReloadFailed, this, [this] {
+    QMessageBox::warning(
+        this, tr("Layout saved"),
+        tr("The new computer was saved. The running core has not confirmed the new layout. Restart sharing when it is "
+           "convenient to apply the saved layout.")
+    );
+  });
   connect(m_connectionDiagnostics, &ConnectionDiagnostics::settingsRequested, this, &MainWindow::openSettings);
   connect(m_connectionDiagnostics, &ConnectionDiagnostics::reconnectRequested, this, [this] {
     if (m_coreProcess.processState() == ProcessState::Stopped)
@@ -1756,8 +1763,7 @@ void MainWindow::serverConnectionConfigureClient(const QString &clientName)
   }
   m_homePages->setCurrentWidget(m_home);
   refreshDesktopWorkspace();
-  if (m_coreProcess.isStarted())
-    m_coreProcess.restart();
+  m_coreProcess.reloadServerLayout();
 }
 
 //////////////////////////////////////////////////////////////////////////////

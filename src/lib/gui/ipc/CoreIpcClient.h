@@ -23,6 +23,7 @@ public:
   virtual void sendStop();
   virtual void sendHealthProbe(const QString &nonce);
   virtual bool sendWorkspaceApply(const QByteArray &request);
+  bool sendServerLayoutReload(const QString &requestId);
 
 Q_SIGNALS:
   void commandReceived(const QString &command, const QString &args);
